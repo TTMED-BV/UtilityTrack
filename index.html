@@ -345,25 +345,32 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
           </select>
         </div>
       </div>
-      <!-- Meter readings -->
-      <div class="form-row">
-        <div class="form-group">
-          <label style="font-size:13px;font-weight:700;color:var(--text1)">⚡ เลขมิเตอร์ก่อน <span style="font-size:10px;color:var(--text3);font-weight:400">เดือนที่แล้ว</span></label>
-          <input type="number" id="e-prev" placeholder="0" min="0" step="0.01" oninput="calcMeterElec()" style="font-size:18px;font-weight:700;padding:10px 14px;border:2px solid var(--border);border-radius:var(--r)">
-          <div id="e-prev-hint" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
-        </div>
-        <div class="form-group">
-          <label style="font-size:13px;font-weight:700;color:var(--text1)">⚡ เลขมิเตอร์หลัง <span style="color:var(--red);font-size:11px">*จำเป็น</span></label>
-          <input type="number" id="e-curr" placeholder="0" min="0" step="0.01" oninput="calcMeterElec()" style="font-size:18px;font-weight:700;padding:10px 14px;border:2px solid var(--gold);border-radius:var(--r)">
-        </div>
+      <!-- Meter readings table -->
+      <div style="overflow-x:auto;margin-bottom:14px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:var(--surface2)">
+              <th style="padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">มิเตอร์</th>
+              <th style="padding:8px 10px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">มิเตอร์เดือนที่แล้ว</th>
+              <th style="padding:8px 10px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--gold);font-weight:700">มิเตอร์ปัจจุบัน ⭐</th>
+              <th style="padding:8px 10px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">หน่วย (kWh)</th>
+              <th style="padding:8px 10px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">เงิน (บาท)</th>
+            </tr>
+          </thead>
+          <tbody id="em-body"></tbody>
+          <tfoot>
+            <tr style="background:var(--surface2)">
+              <td colspan="3" style="padding:10px 12px;border-top:2px solid var(--border);font-weight:700">รวม</td>
+              <td id="em-sum-units" style="padding:10px 12px;text-align:right;border-top:2px solid var(--border);font-weight:800;font-size:18px;color:var(--gold)">0</td>
+              <td id="em-sum-baht" style="padding:10px 12px;text-align:right;border-top:2px solid var(--border);font-weight:800;font-size:16px;color:var(--gold)">0.00</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-      <!-- Units display (computed) -->
-      <div id="e-units-display" style="background:var(--surface2);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:13px;color:var(--text2)">⚡ หน่วยที่ใช้ (ผลต่าง)</span>
-        <span id="e-units-val" style="font-size:24px;font-weight:800;color:var(--gold)">—</span>
-        <span style="font-size:13px;color:var(--text3)">kWh</span>
-      </div>
+      <div id="e-loaded-hint" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
       <input type="hidden" id="e-units">
+      <input type="hidden" id="e-prev">
+      <input type="hidden" id="e-curr">
       <div class="form-row">
         <div class="form-group">
           <label>ค่าไฟฟ้าเดือนนี้ (บาท) <span style="font-size:10px;color:var(--text3);font-weight:400">— กรอกเองได้</span></label>
@@ -1628,6 +1635,7 @@ function renderEntryForm(){
   const erEl=document.getElementById('e-rate');
   if(erEl&&fr>0&&!erEl.value){ erEl.value=fr; }
   applyFixedRateHints();
+  buildElecMeterRows();
   renderSubEntry();
   autoFillPrevMeterElec();
 }
@@ -1660,24 +1668,64 @@ async function saveSubEntry(subId,bid){
   sv();
   alert('บันทึกมิเตอร์ย่อยแล้ว (เก็บในเครื่อง — sync ขึ้น Sheets รุ่นถัดไป)');
 }
+const ELEC_METER_CONFIG = [
+  {key:'1', label:'มิเตอร์ 1'},
+  {key:'2', label:'มิเตอร์ 2'},
+  {key:'3', label:'มิเตอร์ 3'},
+  {key:'4', label:'มิเตอร์ 4'},
+];
+function buildElecMeterRows(){
+  const tbody=document.getElementById('em-body');
+  if(!tbody)return;
+  tbody.innerHTML=ELEC_METER_CONFIG.map(m=>`
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border);font-weight:700;text-align:center;color:var(--text2);font-size:13px">${m.label}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:right">
+        <input type="number" id="em-fp-${m.key}" readonly tabindex="-1" placeholder="—"
+          style="width:105px;text-align:right;padding:4px 7px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;background:var(--surface2);color:var(--text3);cursor:default">
+      </td>
+      <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:right">
+        <input type="number" id="em-f-${m.key}" min="0" step="0.01" placeholder="0"
+          oninput="calcMeterElec()"
+          style="width:105px;text-align:right;padding:4px 7px;border:1.5px solid var(--gold);border-radius:var(--r);font-size:14px;font-weight:700">
+      </td>
+      <td id="em-fu-${m.key}" style="padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;color:var(--gold);font-size:13px;font-weight:600">—</td>
+      <td id="em-fb-${m.key}" style="padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2);font-size:12px">—</td>
+    </tr>`).join('');
+}
 function calcMeterElec(){
-  const prev=parseFloat(document.getElementById('e-prev').value);
-  const curr=parseFloat(document.getElementById('e-curr').value);
-  const unitsHidden=document.getElementById('e-units');
-  const valEl=document.getElementById('e-units-val');
-  if(!isNaN(prev)&&!isNaN(curr)&&curr>=prev){
-    const u=parseFloat((curr-prev).toFixed(2));
-    unitsHidden.value=u;
-    valEl.textContent=u.toLocaleString();
-    valEl.style.color='var(--gold)';
-    calcTotalFromRate();
-  } else if(!isNaN(prev)&&!isNaN(curr)&&curr<prev){
-    unitsHidden.value='';
-    valEl.textContent='⚠ หลัง < ก่อน'; valEl.style.color='var(--red)';
-  } else {
-    unitsHidden.value='';
-    valEl.textContent='—'; valEl.style.color='var(--text3)';
-  }
+  const rate=parseFloat(document.getElementById('e-rate')?.value)||5;
+  let sum=0;
+  ELEC_METER_CONFIG.forEach(m=>{
+    const curr=parseFloat(document.getElementById('em-f-'+m.key)?.value);
+    const prev=parseFloat(document.getElementById('em-fp-'+m.key)?.value);
+    const uEl=document.getElementById('em-fu-'+m.key);
+    const bEl=document.getElementById('em-fb-'+m.key);
+    if(!isNaN(curr)&&curr>=0){
+      let units=0;
+      if(!isNaN(prev)&&curr>=prev){ units=parseFloat((curr-prev).toFixed(2)); }
+      else if(isNaN(prev)){ units=curr; }
+      if(!isNaN(prev)&&curr<prev){
+        if(uEl) uEl.innerHTML='<span style="color:var(--red)">⚠</span>';
+        if(bEl) bEl.textContent='—';
+      } else {
+        sum+=units;
+        if(uEl) uEl.textContent=units>0?units.toLocaleString('th'):'—';
+        if(bEl) bEl.textContent=units>0?(units*rate).toLocaleString('th',{minimumFractionDigits:0}):'—';
+      }
+    } else {
+      if(uEl) uEl.textContent='—';
+      if(bEl) bEl.textContent='—';
+    }
+  });
+  const su=document.getElementById('em-sum-units');
+  const sb=document.getElementById('em-sum-baht');
+  if(su) su.textContent=sum.toLocaleString('th');
+  if(sb) sb.textContent=(sum*rate).toLocaleString('th',{minimumFractionDigits:2,maximumFractionDigits:2});
+  // sync hidden field for backward compat
+  const hidden=document.getElementById('e-units');
+  if(hidden) hidden.value=sum||'';
+  calcTotalFromRate();
 }
 const WATER_FLOOR_CONFIG = [
   {floor:'B', meters:[{key:'B_26',  no:'(26)'}]},
@@ -1753,25 +1801,32 @@ function autoFillPrevMeterElec(){
   const bid=document.getElementById('e-bld')?.value;
   const y=parseInt(document.getElementById('e-yr')?.value);
   const m=parseInt(document.getElementById('e-mo')?.value);
+  const hintEl=document.getElementById('e-loaded-hint');
   if(!bid||!y||!m)return;
   let py=y,pm=m-1; if(pm<1){pm=12;py=y-1;}
   const prevRec=S.records.find(r=>r.building_id===bid&&r.year===py&&r.month===pm);
-  const prevEl=document.getElementById('e-prev');
-  const hintEl=document.getElementById('e-prev-hint');
-  // load existing record for this month first
+  const prevMeters=prevRec?.elec_meters||{};
+  // fill prev month's meter readings into readonly fields
+  ELEC_METER_CONFIG.forEach(mk=>{
+    const fpEl=document.getElementById('em-fp-'+mk.key);
+    if(fpEl) fpEl.value=prevMeters[mk.key]!=null?prevMeters[mk.key]:'';
+  });
+  // load existing record for this month
   const exist=S.records.find(r=>r.building_id===bid&&r.year===y&&r.month===m);
   if(exist){
-    if(exist.meter_prev!=null) prevEl.value=exist.meter_prev;
-    const cEl=document.getElementById('e-curr'); if(exist.meter_curr!=null) cEl.value=exist.meter_curr;
-    const rEl=document.getElementById('e-rate'); if(exist.rate) rEl.value=exist.rate;
-    const tEl=document.getElementById('e-total'); if(exist.total) tEl.value=exist.total;
-    const nEl=document.getElementById('e-note'); if(exist.note) nEl.value=exist.note;
-    if(hintEl) hintEl.innerHTML=`📋 โหลดข้อมูลที่บันทึกไว้แล้ว`;
-  } else if(prevRec&&prevRec.meter_curr!=null){
-    prevEl.value=prevRec.meter_curr;
-    if(hintEl) hintEl.innerHTML=`📋 Auto จากเดือนที่แล้ว: <strong>${prevRec.meter_curr}</strong>`;
+    const currMeters=exist.elec_meters||{};
+    ELEC_METER_CONFIG.forEach(mk=>{
+      const el=document.getElementById('em-f-'+mk.key);
+      if(el) el.value=currMeters[mk.key]!=null?currMeters[mk.key]:'';
+    });
+    const rEl=document.getElementById('e-rate'); if(rEl&&exist.rate) rEl.value=exist.rate;
+    const tEl=document.getElementById('e-total'); if(tEl&&exist.total) tEl.value=exist.total;
+    const nEl=document.getElementById('e-note'); if(nEl&&exist.note) nEl.value=exist.note;
+    if(hintEl) hintEl.innerHTML='📋 โหลดข้อมูลที่บันทึกไว้แล้ว'+(prevRec?' | มิเตอร์เดือนก่อน: Auto':'');
   } else {
-    if(hintEl) hintEl.innerHTML='';
+    ELEC_METER_CONFIG.forEach(mk=>{const el=document.getElementById('em-f-'+mk.key);if(el)el.value='';});
+    const nEl=document.getElementById('e-note'); if(nEl) nEl.value='';
+    if(hintEl) hintEl.innerHTML=prevRec?'📋 โหลดเลขมิเตอร์เดือนก่อนอัตโนมัติ':'';
   }
   calcMeterElec();
 }
@@ -1860,25 +1915,45 @@ async function saveEntry(){
   const bid=document.getElementById('e-bld').value;
   const y=parseInt(document.getElementById('e-yr').value);
   const m=parseInt(document.getElementById('e-mo').value);
-  const units=parseFloat(document.getElementById('e-units').value);
-  const total=parseFloat(document.getElementById('e-total').value);
   const note=document.getElementById('e-note').value;
-  const meterPrevRaw=parseFloat(document.getElementById('e-prev').value);
-  const meterCurrRaw=parseFloat(document.getElementById('e-curr').value);
   const msgEl=document.getElementById('e-msg');
-  if(!bid||!y||!m||isNaN(units)||units<=0){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์หลัง และเลขมิเตอร์ก่อน (หน่วยต้องมากกว่า 0)</div>'; return; }
+  // collect per-meter data
+  const elec_meters={};
+  let units=0;
+  ELEC_METER_CONFIG.forEach(mk=>{
+    const curr=parseFloat(document.getElementById('em-f-'+mk.key)?.value);
+    const prev=parseFloat(document.getElementById('em-fp-'+mk.key)?.value);
+    if(!isNaN(curr)&&curr>=0){
+      elec_meters[mk.key]=curr;
+      const u=(!isNaN(prev)&&curr>=prev)?parseFloat((curr-prev).toFixed(2)):curr;
+      units+=u;
+    }
+  });
+  const total=parseFloat(document.getElementById('e-total').value);
+  if(!bid||!y||!m||units<=0){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์ปัจจุบัน (หน่วยต้องมากกว่า 0)</div>'; return; }
   const rateRaw=parseFloat(document.getElementById('e-rate').value);
   const safeTotal = (!isNaN(total) && total>0) ? total : 0;
   const safeRate = (!isNaN(rateRaw) && rateRaw>0) ? parseFloat(rateRaw.toFixed(4)) : (safeTotal>0?parseFloat((safeTotal/units).toFixed(4)):0);
   const b=getB(bid);
-  const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeTotal,rate:safeRate,note,meter_prev:!isNaN(meterPrevRaw)?meterPrevRaw:null,meter_curr:!isNaN(meterCurrRaw)?meterCurrRaw:null};
+  const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeTotal,rate:safeRate,note,elec_meters};
   const idx=S.records.findIndex(r=>r.building_id===bid&&r.year===y&&r.month===m);
   if(idx>=0){ rec.id=S.records[idx].id; S.records[idx]=rec; } else { S.records.push(rec); }
   sv();
   const btn=document.getElementById('save-entry-btn');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> กำลังบันทึกขึ้น Sheets...';
   try{
-    await apiCall('saverecord', rec);
+    // flatten per-meter data for Sheets columns
+    const apiRec={...rec};
+    ELEC_METER_CONFIG.forEach(mk=>{
+      const prev=parseFloat(document.getElementById('em-fp-'+mk.key)?.value);
+      const curr=elec_meters[mk.key];
+      apiRec['m'+mk.key+'_prev']=isNaN(prev)?null:prev;
+      apiRec['m'+mk.key+'_curr']=curr??null;
+      const pu=(curr!=null&&!isNaN(prev)&&curr>=prev)?parseFloat((curr-prev).toFixed(2)):(curr??null);
+      apiRec['m'+mk.key+'_units']=pu;
+    });
+    // apiRec.units = total kWh, apiRec.total = total baht (already in rec)
+    await apiCall('saverecord', apiRec);
     msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกสำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units.toLocaleString()} kWh</strong>${safeTotal>0?' = '+safeTotal.toLocaleString()+' บาท':''}</div>`;
   }catch(err){
     msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่ส่งขึ้น Sheets ไม่สำเร็จ: ${err.message}</div>`;
@@ -1888,11 +1963,10 @@ async function saveEntry(){
   setTimeout(()=>{ if(msgEl) msgEl.innerHTML=''; },5000);
 }
 function clearEntry(){
-  ['e-prev','e-curr','e-units','e-total','e-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ELEC_METER_CONFIG.forEach(mk=>{const el=document.getElementById('em-f-'+mk.key);if(el)el.value='';});
+  ['e-total','e-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('e-msg').innerHTML='';
-  document.getElementById('e-units-val').textContent='—';
-  document.getElementById('e-units-val').style.color='var(--text3)';
-  document.getElementById('e-prev-hint').innerHTML='';
+  const hintEl=document.getElementById('e-loaded-hint'); if(hintEl) hintEl.innerHTML='';
   const fr=S.settings.fixed_elec_rate||0;
   document.getElementById('e-rate').value=fr>0?fr:'';
   autoFillPrevMeterElec();
@@ -1960,7 +2034,16 @@ async function saveWaterEntry(){
   const btn=document.getElementById('save-water-btn');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> กำลังบันทึกขึ้น Sheets...';}
   try{
-    await apiCall('savewaterrecord', rec);
+    // flatten per-meter data for Sheets columns
+    const wApiRec={...rec};
+    WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(mk=>{
+      const prev=parseFloat(document.getElementById('ew-fp-'+mk.key)?.value);
+      wApiRec['wm_'+mk.key+'_prev']=isNaN(prev)?null:prev;
+      wApiRec['wm_'+mk.key+'_curr']=floor_meters[mk.key]??null;
+      wApiRec['wm_'+mk.key+'_units']=floors[mk.key]??null;
+    });});
+    // wApiRec.units = total m³, wApiRec.total = total baht (already in rec)
+    await apiCall('savewaterrecord', wApiRec);
     if(msgEl) msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกสำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units.toLocaleString()} ลบ.ม.</strong> = ${total.toLocaleString()} บาท</div>`;
   }catch(err){
     if(msgEl) msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่ส่งขึ้น Sheets ไม่สำเร็จ: ${err.message}</div>`;
