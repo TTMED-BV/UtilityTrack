@@ -2178,9 +2178,47 @@ function renderTable(){
   if(tb.value!=='all')recs=recs.filter(r=>r.building_id===tb.value);
   const uLabel=isWater?'หน่วย (ลบ.ม.)':'หน่วย (kWh)';const cLabel=isWater?'ค่าน้ำ (บาท)':'ค่าไฟ (บาท)';
   let h=`<table class="tbl"><thead><tr><th>อาคาร</th><th>ปี</th><th>เดือน</th><th style="text-align:right">${uLabel}</th><th style="text-align:right">${cLabel}</th><th style="text-align:right">บาท/หน่วย</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>`;
-  recs.forEach(r=>{const b=getB(r.building_id);h+=`<tr><td><span class="badge" style="background:${BCL[b?.color||0]};color:${BC[b?.color||0]}">${b?.code||'?'}</span> ${b?.name||'?'}</td><td>${r.year}</td><td>${MFL[r.month-1]}</td><td style="text-align:right;font-weight:600">${r.units.toLocaleString()}</td><td style="text-align:right;font-weight:600">${r.total.toLocaleString()}</td><td style="text-align:right">${r.rate.toFixed(2)}</td><td style="color:var(--text3);font-size:12px">${r.note||''}</td><td><button class="btn btn-xs btn-danger" onclick="delRec('${r.id}',${isWater})">🗑</button></td></tr>`;});
+  recs.forEach(r=>{const b=getB(r.building_id);h+=`<tr><td><span class="badge" style="background:${BCL[b?.color||0]};color:${BC[b?.color||0]}">${b?.code||'?'}</span> ${b?.name||'?'}</td><td>${r.year}</td><td>${MFL[r.month-1]}</td><td style="text-align:right;font-weight:600">${r.units.toLocaleString()}</td><td style="text-align:right;font-weight:600">${r.total.toLocaleString()}</td><td style="text-align:right">${r.rate.toFixed(2)}</td><td style="color:var(--text3);font-size:12px">${r.note||''}</td><td style="white-space:nowrap"><button class="btn btn-xs" style="background:var(--blue-l);color:var(--blue)" onclick="editRec('${r.id}',${isWater})">✏️</button> <button class="btn btn-xs btn-danger" onclick="delRec('${r.id}',${isWater})">🗑</button></td></tr>`;});
   h+='</tbody></table>';
   document.getElementById('tbl-wrap').innerHTML=h;
+}
+function editRec(id,isWater=false){
+  if(!requireAdmin())return;
+  const rec=isWater?S.water_records.find(r=>r.id===id):S.records.find(r=>r.id===id);
+  if(!rec)return;
+  const pageId=isWater?'water':'entry';
+  // activate nav item
+  const navItems=document.querySelectorAll('.nav-item');
+  let navEl=null;
+  navItems.forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+pageId+"'"))navEl=n;});
+  nav(pageId,navEl);
+  setTimeout(()=>{
+    if(isWater){
+      const bld=document.getElementById('ew-bld');if(bld)bld.value=rec.building_id;
+      const yr=document.getElementById('ew-yr');if(yr)yr.value=rec.year;
+      const mo=document.getElementById('ew-mo');if(mo)mo.value=rec.month;
+      const prev=document.getElementById('ew-prev');if(prev&&rec.meter_prev!=null)prev.value=rec.meter_prev;
+      const curr=document.getElementById('ew-curr');if(curr&&rec.meter_curr!=null)curr.value=rec.meter_curr;
+      const rate=document.getElementById('ew-rate');if(rate)rate.value=rec.rate||'';
+      const total=document.getElementById('ew-total');if(total)total.value=rec.total||'';
+      const note=document.getElementById('ew-note');if(note)note.value=rec.note||'';
+      if(typeof calcMeterWater==='function')calcMeterWater();
+    } else {
+      const bld=document.getElementById('e-bld');if(bld)bld.value=rec.building_id;
+      const yr=document.getElementById('e-yr');if(yr)yr.value=rec.year;
+      const mo=document.getElementById('e-mo');if(mo)mo.value=rec.month;
+      const prev=document.getElementById('e-prev');if(prev&&rec.meter_prev!=null)prev.value=rec.meter_prev;
+      const curr=document.getElementById('e-curr');if(curr&&rec.meter_curr!=null)curr.value=rec.meter_curr;
+      const rate=document.getElementById('e-rate');if(rate)rate.value=rec.rate||'';
+      const total=document.getElementById('e-total');if(total)total.value=rec.total||'';
+      const note=document.getElementById('e-note');if(note)note.value=rec.note||'';
+      if(typeof calcMeterElec==='function')calcMeterElec();
+    }
+    // show hint that we're editing existing record
+    const hintId=isWater?'ew-prev-hint':'e-prev-hint';
+    const hintEl=document.getElementById(hintId);
+    if(hintEl)hintEl.innerHTML=`✏️ <strong>แก้ไขข้อมูล</strong> — บันทึกเพื่ออัปเดต`;
+  },100);
 }
 async function delRec(id,isWater=false){
   if(!requireAdmin())return;
