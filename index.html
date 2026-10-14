@@ -531,6 +531,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
         <select id="tbl-yr" class="btn btn-sm" style="padding:5px 8px;width:auto" onchange="renderTable()"><option value="all">ทุกปี</option></select>
         <select id="tbl-type" class="btn btn-sm" style="padding:5px 8px;width:auto" onchange="renderTable()"><option value="elec">⚡ ค่าไฟ</option><option value="water">💧 ค่าน้ำ</option></select>
       <select id="tbl-bld" class="btn btn-sm" style="padding:5px 8px;width:auto" onchange="renderTable()"><option value="all">ทุกอาคาร</option></select>
+        <button class="btn btn-sm" style="background:var(--teal-l);color:var(--teal-d)" onclick="openImportModal('elec')">⚡ นำเข้าค่าไฟ</button>
+        <button class="btn btn-sm" style="background:var(--blue-l);color:var(--blue-d)" onclick="openImportModal('water')">💧 นำเข้าค่าน้ำ</button>
         <button class="btn btn-sm btn-primary" onclick="openExportModal()">📤 Export</button>
       </div>
     </div>
@@ -804,6 +806,39 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
     <div class="modal-foot">
       <button class="btn btn-primary" id="exp-go-btn" onclick="runExport()">📤 สร้างไฟล์</button>
       <button class="btn btn-ghost" onclick="cm('mo-export')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="overlay" id="mo-import">
+  <div class="modal" style="width:620px;max-width:95vw">
+    <div class="modal-head">
+      <div class="modal-title" id="imp-title">📥 นำเข้าข้อมูล</div>
+      <button class="btn btn-ghost btn-icon" onclick="cm('mo-import')">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label>อาคาร</label>
+      <select id="imp-bld" style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);font-size:14px"></select>
+    </div>
+
+    <div class="form-group" id="imp-rate-wrap">
+      <label id="imp-rate-label">อัตรา (บาท/หน่วย)</label>
+      <input id="imp-rate" type="number" step="0.01" style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);font-size:14px" placeholder="เช่น 5.00">
+    </div>
+
+    <div class="form-group">
+      <label id="imp-paste-label">วางข้อมูลจาก Excel (copy หลายแถว แล้ววางได้เลย)</label>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px" id="imp-fmt-hint"></div>
+      <textarea id="imp-data" rows="10" style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);font-size:13px;font-family:monospace;resize:vertical" placeholder="" oninput="previewImport()"></textarea>
+    </div>
+
+    <div id="imp-preview" style="margin-top:8px;padding:10px 14px;border-radius:var(--r-sm);font-size:13px;background:var(--surface2);border:1px solid var(--border);min-height:40px"></div>
+
+    <div class="modal-foot">
+      <button class="btn btn-primary" id="imp-go-btn" onclick="runImport()" disabled>📥 นำเข้า</button>
+      <button class="btn btn-ghost" onclick="cm('mo-import')">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -2182,6 +2217,94 @@ function renderTable(){
   h+='</tbody></table>';
   document.getElementById('tbl-wrap').innerHTML=h;
 }
+/* ===================== IMPORT ===================== */
+let _importType='elec';
+function openImportModal(type){
+  if(!requireAdmin())return;
+  _importType=type;
+  const isW=type==='water';
+  document.getElementById('imp-title').textContent=isW?'💧 นำเข้าข้อมูลค่าน้ำ':'⚡ นำเข้าข้อมูลค่าไฟ';
+  document.getElementById('imp-rate-label').textContent=isW?'อัตราค่าน้ำ (บาท/ลบ.ม.)':'อัตราค่าไฟ (บาท/kWh)';
+  document.getElementById('imp-rate').placeholder=isW?'เช่น 24.00':'เช่น 5.00';
+  document.getElementById('imp-fmt-hint').innerHTML=isW
+    ?'รูปแบบ: <strong>ปี(พ.ศ.) [Tab] เดือน(1-12) [Tab] หน่วย(ลบ.ม.) [Tab] ยอดเงิน(บาท)</strong><br>หรือ: ปี [Tab] เดือน [Tab] มิเตอร์เก่า [Tab] มิเตอร์ใหม่ [Tab] อัตรา'
+    :'รูปแบบ: <strong>ปี(พ.ศ.) [Tab] เดือน(1-12) [Tab] หน่วย(kWh) [Tab] ยอดเงิน(บาท)</strong><br>หรือ: ปี [Tab] เดือน [Tab] มิเตอร์เก่า [Tab] มิเตอร์ใหม่ [Tab] อัตรา';
+  // populate buildings
+  const bldSel=document.getElementById('imp-bld');
+  bldSel.innerHTML=S.buildings.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  document.getElementById('imp-data').value='';
+  document.getElementById('imp-preview').innerHTML='<span style="color:var(--text3)">วางข้อมูลแล้วจะแสดง preview ที่นี่</span>';
+  document.getElementById('imp-go-btn').disabled=true;
+  om('mo-import');
+}
+
+function parseImportData(raw,type){
+  const rows=raw.trim().split('\n').map(r=>r.trim()).filter(r=>r);
+  const parsed=[];
+  for(const row of rows){
+    const cols=row.split(/\t|,/).map(c=>c.trim().replace(/,/g,''));
+    if(cols.length<3)continue;
+    const year=parseInt(cols[0]);
+    const month=parseInt(cols[1]);
+    if(isNaN(year)||isNaN(month)||month<1||month>12)continue;
+    let units,total,rate,mPrev=null,mCurr=null;
+    if(cols.length>=5&&!isNaN(parseFloat(cols[2]))&&!isNaN(parseFloat(cols[3]))&&!isNaN(parseFloat(cols[4]))){
+      // มิเตอร์เก่า มิเตอร์ใหม่ อัตรา
+      mPrev=parseFloat(cols[2]);mCurr=parseFloat(cols[3]);rate=parseFloat(cols[4]);
+      units=Math.round((mCurr-mPrev)*100)/100;total=Math.round(units*rate*100)/100;
+    } else {
+      units=parseFloat(cols[2]);total=parseFloat(cols[3])||0;
+      rate=total&&units?Math.round(total/units*100)/100:parseFloat(document.getElementById('imp-rate').value)||0;
+    }
+    if(isNaN(units)||units<0)continue;
+    parsed.push({year,month,units,total,rate,mPrev,mCurr});
+  }
+  return parsed;
+}
+
+function previewImport(){
+  const raw=document.getElementById('imp-data').value;
+  const parsed=parseImportData(raw,_importType);
+  const btn=document.getElementById('imp-go-btn');
+  const prev=document.getElementById('imp-preview');
+  if(!parsed.length){
+    prev.innerHTML='<span style="color:var(--red)">⚠️ ไม่พบข้อมูลที่อ่านได้ — ตรวจสอบรูปแบบอีกครั้ง</span>';
+    btn.disabled=true;return;
+  }
+  const MN=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const rows=parsed.slice(0,5).map(d=>`<tr><td>${d.year}</td><td>${MN[d.month-1]}</td><td style="text-align:right">${d.units.toLocaleString()}</td><td style="text-align:right">${d.total.toLocaleString()}</td><td style="text-align:right">${d.rate}</td></tr>`).join('');
+  const more=parsed.length>5?`<tr><td colspan="5" style="color:var(--text3);text-align:center">... และอีก ${parsed.length-5} รายการ</td></tr>`:'';
+  prev.innerHTML=`<div style="font-weight:600;margin-bottom:8px;color:var(--green)">✅ พบข้อมูล ${parsed.length} รายการ</div><table class="tbl" style="font-size:12px"><thead><tr><th>ปี</th><th>เดือน</th><th style="text-align:right">หน่วย</th><th style="text-align:right">ยอด (บาท)</th><th style="text-align:right">บาท/หน่วย</th></tr></thead><tbody>${rows}${more}</tbody></table>`;
+  btn.disabled=false;
+}
+
+async function runImport(){
+  const raw=document.getElementById('imp-data').value;
+  const parsed=parseImportData(raw,_importType);
+  if(!parsed.length)return;
+  const isW=_importType==='water';
+  const bid=document.getElementById('imp-bld').value;
+  const bld=getB(bid);
+  if(!bld)return;
+  let ins=0,upd=0;
+  const arr=isW?S.water_records:S.records;
+  const prefix=isW?'w_imp_':'r_imp_';
+  parsed.forEach(d=>{
+    const rec={
+      id:prefix+bid+'_'+d.year+'_'+d.month,
+      building_id:bid,building_name:bld.name,building_code:bld.code,
+      year:d.year,month:d.month,units:d.units,total:d.total,rate:d.rate,
+      note:'นำเข้าจากไฟล์',meter_prev:d.mPrev,meter_curr:d.mCurr
+    };
+    const i=arr.findIndex(r=>r.building_id===bid&&r.year===d.year&&r.month===d.month);
+    if(i>=0){arr[i]=rec;upd++;}else{arr.push(rec);ins++;}
+  });
+  sv();
+  cm('mo-import');
+  renderTable();
+  alert(`✅ นำเข้าสำเร็จ!\nใหม่: ${ins} รายการ | อัปเดต: ${upd} รายการ`);
+}
+
 function editRec(id,isWater=false){
   if(!requireAdmin())return;
   const rec=isWater?S.water_records.find(r=>r.id===id):S.records.find(r=>r.id===id);
