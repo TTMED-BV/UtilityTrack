@@ -2450,6 +2450,32 @@ function parseElec4Data(raw){
     return parseFloat(s.replace(/,/g,''));
   }
 
+  // ─── CSV mode: year,month,m1,m2,m3,m4[,total_units,total_baht] ───
+  const firstDataLine=raw.split('\n').find(l=>l.trim()&&!/ตารางสรุป|เดือน/.test(l));
+  if(firstDataLine&&firstDataLine.includes(',')){
+    const csvParsed=[];
+    for(const line of raw.split('\n')){
+      const t=line.trim();
+      if(!t) continue;
+      // skip header row
+      if(/^year|^ปี/.test(t)) continue;
+      const cols=t.split(',');
+      const yr=parseInt(cols[0]),mo=parseInt(cols[1]);
+      if(isNaN(yr)||isNaN(mo)||yr<2500||yr>2600||mo<1||mo>12) continue;
+      const m1=parseFloat(cols[2]),m2=parseFloat(cols[3]),m3=parseFloat(cols[4]),m4=parseFloat(cols[5]);
+      const mu={};
+      if(!isNaN(m1)&&m1>=0) mu[1]=m1;
+      if(!isNaN(m2)&&m2>=0) mu[2]=m2;
+      if(!isNaN(m3)&&m3>=0) mu[3]=m3;
+      if(!isNaN(m4)&&m4>=0) mu[4]=m4;
+      if(!Object.keys(mu).length) continue;
+      const total=Object.values(mu).reduce((a,b)=>a+b,0);
+      csvParsed.push({year:yr,month:mo,meterUnits:{...mu},units:Math.round(total*100)/100});
+    }
+    if(csvParsed.length) return csvParsed;
+  }
+  // ─────────────────────────────────────────────────────────────────
+
   const lines=raw.split('\n');
   const parsed=[];
   let curMo=null;
