@@ -543,6 +543,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
       <select id="tbl-bld" class="btn btn-sm" style="padding:5px 8px;width:auto" onchange="renderTable()"><option value="all">ทุกอาคาร</option></select>
         <button class="btn btn-sm" style="background:var(--teal-l);color:var(--teal-d)" onclick="openImportModal('elec')">⚡ นำเข้าค่าไฟ</button>
         <button class="btn btn-sm" style="background:var(--blue-l);color:var(--blue-d)" onclick="openImportModal('water')">💧 นำเข้าค่าน้ำ</button>
+        <button class="btn btn-sm" style="background:#fef9c3;color:#854d0e" onclick="openImportElec4()">📋 นำเข้า 4 มิเตอร์</button>
         <button class="btn btn-sm btn-primary" onclick="openExportModal()">📤 Export</button>
       </div>
     </div>
@@ -816,6 +817,51 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
     <div class="modal-foot">
       <button class="btn btn-primary" id="exp-go-btn" onclick="runExport()">📤 สร้างไฟล์</button>
       <button class="btn btn-ghost" onclick="cm('mo-export')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Elec 4-Meter Modal -->
+<div class="overlay" id="mo-import-elec4">
+  <div class="modal" style="width:700px;max-width:95vw">
+    <div class="modal-head">
+      <div class="modal-title">📥 นำเข้าค่าไฟฟ้า 4 มิเตอร์</div>
+      <button class="btn btn-ghost btn-icon" onclick="cm('mo-import-elec4')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:2">
+        <label>อาคาร</label>
+        <select id="imp4-bld" style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);font-size:14px"></select>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>อัตราค่าไฟ (บาท/kWh)</label>
+        <input id="imp4-rate" type="number" step="0.01" placeholder="เช่น 5.00"
+          style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);font-size:14px"
+          oninput="previewImportElec4()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>วางข้อมูลจาก Excel (copy หลายแถวแล้ววางได้เลย)</label>
+      <div style="font-size:11px;color:var(--text3);padding:6px 10px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:8px;font-family:monospace;line-height:1.8">
+        คอลัมน์ที่ต้องมี (คั่นด้วย Tab):<br>
+        <strong>ปี(พ.ศ.)</strong> &nbsp;|&nbsp; <strong>เดือน</strong> &nbsp;|&nbsp;
+        ม.1(เดิม) &nbsp;ม.1(ใหม่) &nbsp;|&nbsp;
+        ม.2(เดิม) &nbsp;ม.2(ใหม่) &nbsp;|&nbsp;
+        ม.3(เดิม) &nbsp;ม.3(ใหม่) &nbsp;|&nbsp;
+        ม.4(เดิม) &nbsp;ม.4(ใหม่) &nbsp;|&nbsp; [อัตรา ไม่จำเป็น]<br>
+        <span style="color:var(--teal-d)">ตัวอย่าง: 2567 &nbsp;10 &nbsp;1000 &nbsp;1045 &nbsp;2500 &nbsp;2563 &nbsp;800 &nbsp;834 &nbsp;1200 &nbsp;1241</span>
+      </div>
+      <textarea id="imp4-data" rows="10"
+        style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);font-size:13px;font-family:monospace;resize:vertical"
+        placeholder="Copy จาก Excel แล้ววางที่นี่..."
+        oninput="previewImportElec4()"></textarea>
+    </div>
+    <div id="imp4-preview" style="margin-top:8px;padding:10px 14px;border-radius:var(--r-sm);font-size:13px;background:var(--surface2);border:1px solid var(--border);min-height:40px">
+      <span style="color:var(--text3)">วางข้อมูลแล้วจะแสดง preview ที่นี่</span>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" id="imp4-go-btn" onclick="runImportElec4()" disabled>📥 นำเข้า</button>
+      <button class="btn btn-ghost" onclick="cm('mo-import-elec4')">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -2357,6 +2403,169 @@ function renderTable(){
   h+='</tbody></table>';
   document.getElementById('tbl-wrap').innerHTML=h;
 }
+/* ===================== IMPORT ELEC 4-METER ===================== */
+function openImportElec4(){
+  if(!requireAdmin())return;
+  const bldSel=document.getElementById('imp4-bld');
+  bldSel.innerHTML=S.buildings.filter(b=>b.active).map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  document.getElementById('imp4-data').value='';
+  document.getElementById('imp4-preview').innerHTML='<span style="color:var(--text3)">วางข้อมูลแล้วจะแสดง preview ที่นี่</span>';
+  document.getElementById('imp4-go-btn').disabled=true;
+  om('mo-import-elec4');
+}
+
+function parseElec4Data(raw){
+  const EN_MO={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  const TH_FULL={มกราคม:1,กุมภาพันธ์:2,มีนาคม:3,เมษายน:4,พฤษภาคม:5,มิถุนายน:6,กรกฎาคม:7,กรกฏาคม:7,สิงหาคม:8,กันยายน:9,ตุลาคม:10,พฤศจิกายน:11,ธันวาคม:12};
+
+  function parseMonthLabel(s){
+    s=s.trim();
+    // English: "Dec-66", "Jan-67"
+    const enM=s.match(/^([A-Za-z]{3})-(\d{2})$/);
+    if(enM){
+      const mo=EN_MO[enM[1].toLowerCase()];
+      const yr=2500+parseInt(enM[2]);
+      if(mo) return {month:mo,year:yr};
+    }
+    // Thai full name + 4-digit year: "ตุลาคม 2567"
+    for(const[name,mo] of Object.entries(TH_FULL)){
+      if(s.includes(name)){
+        const yrM=s.match(/(\d{4})/);
+        if(yrM) return {month:mo,year:parseInt(yrM[1])};
+      }
+    }
+    return null;
+  }
+
+  function splitCols(line){
+    // try tab first
+    const byTab=line.split('\t').map(c=>c.trim());
+    if(byTab.length>=3) return byTab;
+    // fall back to 2+ spaces
+    return line.split(/  +/).map(c=>c.trim());
+  }
+
+  function toNum(s){
+    if(!s||s==='-'||s==='') return NaN;
+    return parseFloat(s.replace(/,/g,''));
+  }
+
+  const lines=raw.split('\n');
+  const parsed=[];
+  let curMo=null;
+  let meterUnits={};
+
+  for(const line of lines){
+    const trimmed=line.trim();
+    // skip blank, title, header
+    if(!trimmed) continue;
+    if(trimmed.includes('ตารางสรุป')) continue;
+    if(trimmed.startsWith('เดือน')&&trimmed.includes('meter')) continue;
+
+    const cols=splitCols(line);
+
+    // col 0: possible month label
+    const monthParsed=cols[0]?parseMonthLabel(cols[0]):null;
+    if(monthParsed){
+      // flush previous month
+      if(curMo&&Object.keys(meterUnits).length>0){
+        let total=0;
+        [1,2,3,4].forEach(i=>total+=meterUnits[i]||0);
+        parsed.push({year:curMo.year,month:curMo.month,meterUnits:{...meterUnits},units:Math.round(total*100)/100});
+      }
+      curMo=monthParsed;
+      meterUnits={};
+    }
+
+    // find meter number column (1-4)
+    // cols[1] should be meter number when format is: [month?] [meter] [units] ...
+    // but sometimes col[0] is empty and col[1] is meter num
+    let meterCol=-1, meterNum=NaN;
+    for(let ci=0;ci<Math.min(cols.length,3);ci++){
+      const n=parseInt(cols[ci]);
+      if(n>=1&&n<=4&&!isNaN(n)){
+        // check that adjacent col looks like a number (units)
+        const nextNum=toNum(cols[ci+1]);
+        if(!isNaN(nextNum)&&nextNum>=0){
+          meterCol=ci; meterNum=n; break;
+        }
+      }
+    }
+    if(isNaN(meterNum)||!curMo) continue;
+
+    const units=toNum(cols[meterCol+1]);
+    if(!isNaN(units)&&units>=0) meterUnits[meterNum]=units;
+  }
+  // flush last month
+  if(curMo&&Object.keys(meterUnits).length>0){
+    let total=0;
+    [1,2,3,4].forEach(i=>total+=meterUnits[i]||0);
+    parsed.push({year:curMo.year,month:curMo.month,meterUnits:{...meterUnits},units:Math.round(total*100)/100});
+  }
+  return parsed;
+}
+
+function previewImportElec4(){
+  const raw=document.getElementById('imp4-data').value;
+  const parsed=parseElec4Data(raw);
+  const btn=document.getElementById('imp4-go-btn');
+  const prev=document.getElementById('imp4-preview');
+  if(!parsed.length){
+    prev.innerHTML='<span style="color:var(--red)">⚠️ ไม่พบข้อมูล — ตรวจรูปแบบอีกครั้ง</span>';
+    btn.disabled=true; return;
+  }
+  const MN=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const rate=parseFloat(document.getElementById('imp4-rate').value)||5;
+  const rows=parsed.slice(0,6).map(d=>{
+    const mu=d.meterUnits;
+    return `<tr>
+      <td>${d.year}</td><td>${MN[d.month-1]}</td>
+      <td style="text-align:right">${mu[1]!=null?mu[1].toLocaleString():'—'}</td>
+      <td style="text-align:right">${mu[2]!=null?mu[2].toLocaleString():'—'}</td>
+      <td style="text-align:right">${mu[3]!=null?mu[3].toLocaleString():'—'}</td>
+      <td style="text-align:right">${mu[4]!=null?mu[4].toLocaleString():'—'}</td>
+      <td style="text-align:right;font-weight:700;color:var(--gold)">${d.units.toLocaleString()}</td>
+      <td style="text-align:right">${(d.units*rate).toLocaleString('th',{maximumFractionDigits:0})}</td>
+    </tr>`;
+  }).join('');
+  prev.innerHTML=`<div style="font-weight:600;margin-bottom:8px;color:var(--green)">✅ พบข้อมูล ${parsed.length} เดือน</div>
+  <div style="overflow-x:auto"><table class="tbl" style="font-size:12px">
+    <thead><tr><th>ปี</th><th>เดือน</th><th style="text-align:right">ม.1</th><th style="text-align:right">ม.2</th><th style="text-align:right">ม.3</th><th style="text-align:right">ม.4</th><th style="text-align:right;color:var(--gold)">รวม kWh</th><th style="text-align:right">บาท</th></tr></thead>
+    <tbody>${rows}${parsed.length>6?`<tr><td colspan="8" style="color:var(--text3);text-align:center">... อีก ${parsed.length-6} เดือน</td></tr>`:''}</tbody>
+  </table></div>`;
+  btn.disabled=false;
+}
+
+async function runImportElec4(){
+  if(!requireAdmin())return;
+  const raw=document.getElementById('imp4-data').value;
+  const parsed=parseElec4Data(raw);
+  if(!parsed.length)return;
+  const bid=document.getElementById('imp4-bld').value;
+  const bld=getB(bid);
+  if(!bld)return;
+  const rate=parseFloat(document.getElementById('imp4-rate').value)||5;
+  let ins=0,upd=0;
+  parsed.forEach(d=>{
+    const mu=d.meterUnits;
+    const elec_meters={'1':null,'2':null,'3':null,'4':null};
+    [1,2,3,4].forEach(i=>{ if(mu[i]!=null) elec_meters[String(i)]=mu[i]; });
+    const total=parseFloat((d.units*rate).toFixed(2));
+    const rec={
+      id:'r_imp4_'+bid+'_'+d.year+'_'+d.month,
+      building_id:bid,building_name:bld.name,building_code:bld.code,
+      year:d.year,month:d.month,units:d.units,total,rate,
+      note:'นำเข้า 4 มิเตอร์',elec_meters
+    };
+    const i=S.records.findIndex(r=>r.building_id===bid&&r.year===d.year&&r.month===d.month);
+    if(i>=0){rec.id=S.records[i].id;S.records[i]=rec;upd++;}else{S.records.push(rec);ins++;}
+  });
+  sv();
+  cm('mo-import-elec4');
+  renderTable(); renderEntryStatus(); renderDash();
+  alert(`✅ นำเข้าสำเร็จ!\nใหม่: ${ins} เดือน | อัปเดต: ${upd} เดือน\nรวม ${ins+upd} รายการ`);
+}
+
 /* ===================== IMPORT ===================== */
 let _importType='elec';
 function openImportModal(type){
