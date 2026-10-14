@@ -421,15 +421,18 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
         <table style="width:100%;border-collapse:collapse;font-size:14px">
           <thead>
             <tr style="background:var(--surface2)">
-              <th style="padding:9px 12px;text-align:left;border-bottom:2px solid var(--border);font-size:13px;color:var(--text2)">ชั้น</th>
-              <th style="padding:9px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:13px;color:var(--text2)">จำนวนหน่วย (ลบ.ม.)</th>
-              <th style="padding:9px 12px;text-align:right;border-bottom:2px solid var(--border);font-size:13px;color:var(--text2)">คิดเป็นเงิน (บาท)</th>
+              <th style="padding:9px 8px;text-align:center;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">ชั้น</th>
+              <th style="padding:9px 8px;text-align:center;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">มิเตอร์</th>
+              <th style="padding:9px 8px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">มิเตอร์เดือนที่แล้ว</th>
+              <th style="padding:9px 8px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--teal-d,#0891b2);font-weight:700">เลขมิเตอร์ปัจจุบัน ⭐</th>
+              <th style="padding:9px 8px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">หน่วย (ลบ.ม.)</th>
+              <th style="padding:9px 8px;text-align:right;border-bottom:2px solid var(--border);font-size:12px;color:var(--text2)">คิดเป็นเงิน (บาท)</th>
             </tr>
           </thead>
           <tbody id="ew-floor-body"></tbody>
           <tfoot>
             <tr style="background:var(--surface2)">
-              <td style="padding:10px 12px;border-top:2px solid var(--border);font-weight:700">รวม</td>
+              <td colspan="4" style="padding:10px 12px;border-top:2px solid var(--border);font-weight:700">รวม</td>
               <td id="ew-sum-units" style="padding:10px 12px;text-align:right;border-top:2px solid var(--border);font-weight:800;font-size:20px;color:var(--teal-d,#0891b2)">0</td>
               <td id="ew-sum-baht" style="padding:10px 12px;text-align:right;border-top:2px solid var(--border);font-weight:800;font-size:18px;color:var(--teal-d,#0891b2)">0.00</td>
             </tr>
@@ -1676,29 +1679,69 @@ function calcMeterElec(){
     valEl.textContent='—'; valEl.style.color='var(--text3)';
   }
 }
-const WATER_FLOORS = ['B','1','2','3','4','5','6','7'];
+const WATER_FLOOR_CONFIG = [
+  {floor:'B', meters:[{key:'B_26',  no:'(26)'}]},
+  {floor:'1', meters:[{key:'1_27',  no:'(27)'},{key:'1_29',  no:'(29)'}]},
+  {floor:'2', meters:[{key:'2_29',  no:'(29)'},{key:'2_30',  no:'(30)'}]},
+  {floor:'3', meters:[{key:'3_31',  no:'(31)'},{key:'3_32',  no:'(32)'}]},
+  {floor:'4', meters:[{key:'4_33',  no:'(33)'},{key:'4_34',  no:'(34)'}]},
+  {floor:'5', meters:[{key:'5_35',  no:'(35)'},{key:'5_36',  no:'(36)'}]},
+  {floor:'6', meters:[{key:'6_37',  no:'(37)'},{key:'6_38',  no:'(38)'}]},
+  {floor:'7', meters:[{key:'7_15',  no:'(15)'},{key:'7_40',  no:'(40)'},{key:'7_4',   no:'(4)'},{key:'7_703', no:'ห้อง703(4)'}]},
+];
+const WATER_FLOORS = WATER_FLOOR_CONFIG.map(f=>f.floor);
 function buildWaterFloorRows(){
   const tbody=document.getElementById('ew-floor-body');
   if(!tbody)return;
-  tbody.innerHTML=WATER_FLOORS.map(f=>`
-    <tr>
-      <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600;color:var(--text2)">ชั้น ${f}</td>
-      <td style="padding:6px 12px;border-bottom:1px solid var(--border);text-align:right">
-        <input type="number" id="ew-f-${f}" min="0" step="1" placeholder="0"
-          oninput="calcWaterTotals()"
-          style="width:110px;text-align:right;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:15px;font-weight:600">
-      </td>
-      <td id="ew-fb-${f}" style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2);font-size:13px">—</td>
-    </tr>`).join('');
+  let html='';
+  WATER_FLOOR_CONFIG.forEach(fc=>{
+    fc.meters.forEach((m,mi)=>{
+      const isFirst=mi===0;
+      html+=`<tr>
+        ${isFirst?`<td rowspan="${fc.meters.length}" style="padding:8px 10px;border-bottom:2px solid var(--border);font-weight:700;color:var(--text2);vertical-align:middle;text-align:center;font-size:13px">ชั้น<br>${fc.floor}</td>`:''}
+        <td style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);text-align:center;white-space:nowrap">${m.no}</td>
+        <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:right">
+          <input type="number" id="ew-fp-${m.key}" readonly tabindex="-1" placeholder="—"
+            style="width:95px;text-align:right;padding:4px 7px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;background:var(--surface2);color:var(--text3);cursor:default">
+        </td>
+        <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:right">
+          <input type="number" id="ew-f-${m.key}" min="0" step="1" placeholder="0"
+            oninput="calcWaterTotals()"
+            style="width:95px;text-align:right;padding:4px 7px;border:1.5px solid var(--teal-d,#0891b2);border-radius:var(--r);font-size:14px;font-weight:700">
+        </td>
+        <td id="ew-fu-${m.key}" style="padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2);font-size:12px">—</td>
+        <td id="ew-fb-${m.key}" style="padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2);font-size:12px">—</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML=html;
 }
 function calcWaterTotals(){
   const rate=parseFloat(document.getElementById('ew-rate')?.value)||24;
   let sum=0;
-  WATER_FLOORS.forEach(f=>{
-    const v=parseFloat(document.getElementById('ew-f-'+f)?.value)||0;
-    sum+=v;
-    const bEl=document.getElementById('ew-fb-'+f);
-    if(bEl) bEl.textContent=v>0?(v*rate).toLocaleString('th',{minimumFractionDigits:0}):'—';
+  WATER_FLOOR_CONFIG.forEach(fc=>{
+    fc.meters.forEach(m=>{
+      const curr=parseFloat(document.getElementById('ew-f-'+m.key)?.value);
+      const prev=parseFloat(document.getElementById('ew-fp-'+m.key)?.value);
+      let units=0;
+      const uEl=document.getElementById('ew-fu-'+m.key);
+      const bEl=document.getElementById('ew-fb-'+m.key);
+      if(!isNaN(curr)&&curr>=0){
+        if(!isNaN(prev)&&curr>=prev){ units=parseFloat((curr-prev).toFixed(2)); }
+        else if(isNaN(prev)){ units=curr; }
+        if(!isNaN(prev)&&curr<prev){
+          if(uEl) uEl.innerHTML='<span style="color:var(--red)">⚠</span>';
+          if(bEl) bEl.textContent='—';
+        } else {
+          sum+=units;
+          if(uEl) uEl.textContent=units>0?units.toLocaleString():'—';
+          if(bEl) bEl.textContent=units>0?(units*rate).toLocaleString('th',{minimumFractionDigits:0}):'—';
+        }
+      } else {
+        if(uEl) uEl.textContent='—';
+        if(bEl) bEl.textContent='—';
+      }
+    });
   });
   const su=document.getElementById('ew-sum-units');
   const sb=document.getElementById('ew-sum-baht');
@@ -1739,20 +1782,29 @@ function loadExistingWater(){
   const m=parseInt(document.getElementById('ew-mo')?.value);
   const hint=document.getElementById('ew-loaded-hint');
   if(!bid||!y||!m)return;
+  // find previous month's record to auto-fill prev meter readings
+  let py=y,pm=m-1; if(pm<1){pm=12;py=y-1;}
+  const prevRec=S.water_records.find(r=>r.building_id===bid&&r.year===py&&r.month===pm);
+  const prevMeters=prevRec?.floor_meters||{};
+  WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(m=>{
+    const fpEl=document.getElementById('ew-fp-'+m.key);
+    if(fpEl) fpEl.value=prevMeters[m.key]!=null?prevMeters[m.key]:'';
+  });});
+  // load current month's existing record if editing
   const exist=S.water_records.find(r=>r.building_id===bid&&r.year===y&&r.month===m);
   if(exist){
-    const floors=exist.floors||{};
-    WATER_FLOORS.forEach(f=>{
-      const el=document.getElementById('ew-f-'+f);
-      if(el) el.value=floors[f]!=null?floors[f]:'';
-    });
+    const currMeters=exist.floor_meters||{};
+    WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(m=>{
+      const el=document.getElementById('ew-f-'+m.key);
+      if(el) el.value=currMeters[m.key]!=null?currMeters[m.key]:'';
+    });});
     const rEl=document.getElementById('ew-rate'); if(rEl&&exist.rate) rEl.value=exist.rate;
     const nEl=document.getElementById('ew-note'); if(nEl&&exist.note) nEl.value=exist.note;
-    if(hint) hint.innerHTML='📋 โหลดข้อมูลที่บันทึกไว้แล้ว';
+    if(hint) hint.innerHTML='📋 โหลดข้อมูลที่บันทึกไว้แล้ว'+(prevRec?` | มิเตอร์เดือนก่อน: Auto`:'');
   } else {
-    WATER_FLOORS.forEach(f=>{const el=document.getElementById('ew-f-'+f);if(el)el.value='';});
+    WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(m=>{const el=document.getElementById('ew-f-'+m.key);if(el)el.value='';});});
     const nEl=document.getElementById('ew-note');if(nEl)nEl.value='';
-    if(hint) hint.innerHTML='';
+    if(hint) hint.innerHTML=prevRec?'📋 โหลดเลขมิเตอร์เดือนก่อนอัตโนมัติ':'';
   }
   calcWaterTotals();
 }
@@ -1883,20 +1935,26 @@ async function saveWaterEntry(){
   const msgEl=document.getElementById('ew-msg');
   const wrateRaw=parseFloat(document.getElementById('ew-rate')?.value);
   const note=document.getElementById('ew-note').value;
-  // collect floor data
+  // collect floor meter readings and compute units from diff
+  const floor_meters={};
   const floors={};
   let units=0;
-  WATER_FLOORS.forEach(f=>{
-    const v=parseFloat(document.getElementById('ew-f-'+f)?.value)||0;
-    floors[f]=v; units+=v;
-  });
-  if(!bid||!y||!m||units<=0){ if(msgEl) msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกจำนวนหน่วยอย่างน้อย 1 ชั้น</div>'; return; }
+  WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(m=>{
+    const curr=parseFloat(document.getElementById('ew-f-'+m.key)?.value);
+    const prev=parseFloat(document.getElementById('ew-fp-'+m.key)?.value);
+    if(!isNaN(curr)&&curr>=0){
+      floor_meters[m.key]=curr;
+      const u=(!isNaN(prev)&&curr>=prev)?parseFloat((curr-prev).toFixed(2)):curr;
+      floors[m.key]=u; units+=u;
+    }
+  });});
+  if(!bid||!y||!m||units<=0){ if(msgEl) msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์อย่างน้อย 1 ชั้น</div>'; return; }
   const rate=(!isNaN(wrateRaw)&&wrateRaw>0)?parseFloat(wrateRaw.toFixed(4)):24;
   const total=parseFloat((units*rate).toFixed(2));
   const b=getB(bid);
   const existIdx=S.water_records.findIndex(r=>r.building_id===bid&&r.year===y&&r.month===m);
   const existId=existIdx>=0?S.water_records[existIdx].id:null;
-  const rec={id:existId||('w'+Math.random().toString(36).slice(2)),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total,rate,note,floors,meter_prev:null,meter_curr:null};
+  const rec={id:existId||('w'+Math.random().toString(36).slice(2)),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total,rate,note,floors,floor_meters,meter_prev:null,meter_curr:null};
   if(existIdx>=0){S.water_records[existIdx]=rec;}else{S.water_records.push(rec);}
   sv();
   const btn=document.getElementById('save-water-btn');
@@ -1912,12 +1970,11 @@ async function saveWaterEntry(){
   setTimeout(()=>{ if(msgEl) msgEl.innerHTML=''; },5000);
 }
 function clearWaterEntry(){
-  WATER_FLOORS.forEach(f=>{const el=document.getElementById('ew-f-'+f);if(el)el.value='';});
+  WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(m=>{const el=document.getElementById('ew-f-'+m.key);if(el)el.value='';});});
   const nEl=document.getElementById('ew-note');if(nEl)nEl.value='';
   const fwr=S.settings.fixed_water_rate||0;
-  const r=document.getElementById('ew-rate');if(r)r.value=fwr>0?fwr:'';
-  const h=document.getElementById('ew-loaded-hint');if(h)h.innerHTML='';
-  calcWaterTotals();
+  const r=document.getElementById('ew-rate');if(r)r.value=fwr>0?fwr:24;
+  loadExistingWater();
 }
 
 /* ===================== COMPARE / TREND / HEATMAP / TABLE ===================== */
