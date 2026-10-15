@@ -424,6 +424,11 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
         <div class="row mt"><button class="btn btn-g" onclick="runSeed()">📥 โหลดข้อมูลตั้งต้นทั้งหมด</button>
           <button class="btn btn-s" onclick="exportJSON()">⬇ สำรองข้อมูล (JSON)</button></div>
         <div id="s-seed-msg" class="mt"></div>
+        <div class="divider" style="height:1px;background:var(--line);margin:16px 0"></div>
+        <div class="ct" style="font-size:13.5px">🔧 ซ่อมข้อมูลหลังแก้ย้อนหลัง</div>
+        <div class="cs" style="margin-bottom:8px">คำนวณเลขต้นเดือนและหน่วยที่ใช้ใหม่ทั้งหมดจากเลขปลายเดือนก่อน แล้วอัปเดตขึ้น Sheet — ใช้เมื่อแก้ตัวเลขของเดือนเก่าแล้วอยากให้เดือนถัดไปตามทั้งสาย</div>
+        <button class="btn btn-s" onclick="rebuildAll()">🔧 คำนวณหน่วยใหม่ทั้งหมด</button>
+        <div id="s-fix"></div>
       </div>
     </div>
 
@@ -501,6 +506,30 @@ function meterRow(type,y,m,mid){
   const L = type==='elec'?S.elec_meter:S.water_meter;
   return L.find(r=>+r.year===y && +r.month===m && r.meter_id===mid) || null;
 }
+/** เลขต้นเดือน = เลขปลายเดือนก่อนเสมอ (ถ้ามีเดือนก่อนในระบบ)
+ *  แก้เดือนก่อนแล้วเดือนถัดไปจะตามทันทีโดยไม่ต้องกรอกใหม่
+ *  เดือนแรกสุดที่ไม่มีเดือนก่อน จึงใช้ค่าตั้งต้นที่บันทึกไว้ในแถวนั้นเอง */
+function chainPrev(type,y,m,mid){
+  const [py,pm]=prevYM(y,m);
+  const pr=meterRow(type,py,pm,mid);
+  if(pr && n(pr.curr_raw)!=null) return n(pr.curr_raw);
+  const cr=meterRow(type,y,m,mid);
+  return cr ? n(cr.prev_raw) : null;
+}
+function hasPrevRow(type,y,m,mid){
+  const [py,pm]=prevYM(y,m);
+  const pr=meterRow(type,py,pm,mid);
+  return !!(pr && n(pr.curr_raw)!=null);
+}
+/** หน่วยที่ใช้ — คำนวณสดจากลูกโซ่เสมอ ไม่เชื่อค่าที่เก็บไว้ (กันค่าค้างเมื่อแก้ย้อนหลัง) */
+function usedOf(type,y,m,mc){
+  const cr=meterRow(type,y,m,mc.id);
+  if(!cr) return null;
+  const curr=n(cr.curr_raw); if(curr==null) return null;
+  const prev=chainPrev(type,y,m,mc.id);
+  if(prev==null||curr<prev) return null;
+  return r2((curr-prev)*(+mc.multiplier||1));
+}
 function billOf(type,y,m){
   const L = type==='elec'?S.elec_bill:S.water_bill;
   return L.find(b=>+b.year===y && +b.month===m) || null;
@@ -532,8 +561,8 @@ function compute(type,y,m){
   const bill = billOf(type,y,m);
   const detail = cfg.map(mc=>{
     const row = meterRow(type,y,m,mc.id);
-    return { cfg:mc, row, used: row ? n(row.used_unit) : null,
-             prev: row ? n(row.prev_raw) : null, curr: row ? n(row.curr_raw) : null };
+    return { cfg:mc, row, used: usedOf(type,y,m,mc),
+             prev: chainPrev(type,y,m,mc.id), curr: row ? n(row.curr_raw) : null };
   });
   const have = detail.filter(d=>d.used!=null);
   const hospUnit = have.filter(d=>d.cfg.zone==='hospital').reduce((s,d)=>s+d.used,0);
@@ -541,8 +570,10 @@ function compute(type,y,m){
   const subTotal = hospUnit + subFac;
 
   const rate = n(S.settings.water_rate) || 24;
-  let totalUnit = bill ? n(bill.total_unit) : null;
-  let totalCost = bill ? n(bill.total_cost) : null;
+  // บิลที่ระบบคิดเองจากมิเตอร์ย่อย (src=submeter) ต้องคิดใหม่เสมอ ไม่งั้นแก้มิเตอร์แล้วยอดไม่ตาม
+  const derived = bill && String(bill.src||'')==='submeter';
+  let totalUnit = (bill && !derived) ? n(bill.total_unit) : null;
+  let totalCost = (bill && !derived) ? n(bill.total_cost) : null;
   let src = 'bill';
   // ค่าน้ำ: ถ้าไม่มีบิล ใช้ผลรวมมิเตอร์ย่อยเป็นตัวตั้ง และคิดเงินจากอัตรา
   if(type==='water'){
@@ -570,20 +601,14 @@ function qualityIssues(type){
   const ms = allMonths();
   cfg.forEach(mc=>{
     const series = ms.map(([y,m])=>({y,m,row:meterRow(type,y,m,mc.id)})).filter(x=>x.row);
-    const deltas = series.map(x=>n(x.row.used_unit)).filter(v=>v!=null&&v>0).sort((a,b)=>a-b);
+    const deltas = series.map(x=>usedOf(type,x.y,x.m,mc)).filter(v=>v!=null&&v>0).sort((a,b)=>a-b);
     const med = deltas.length? deltas[Math.floor(deltas.length/2)] : null;
     series.forEach((x,i)=>{
-      const prev=n(x.row.prev_raw), curr=n(x.row.curr_raw), used=n(x.row.used_unit);
+      const prev=chainPrev(type,x.y,x.m,mc.id), curr=n(x.row.curr_raw), used=usedOf(type,x.y,x.m,mc);
       const lbl=`${MN[x.m-1]} ${x.y}`;
       const dp=(+mc.multiplier||1)>1?4:0;   // หน้าปัด MWh แสดง 4 ตำแหน่ง มิเตอร์น้ำเป็นจำนวนเต็ม
       if(prev!=null&&curr!=null&&curr<prev)
         out.push({type,lbl,y:x.y,m:x.m,mc,sev:'bad',what:'เลขมิเตอร์ถอยหลัง',detail:`เดือนก่อน ${fmt(prev,dp)} → ปัจจุบัน ${fmt(curr,dp)}`});
-      if(i>0){
-        const p=series[i-1];
-        const pc=n(p.row.curr_raw);
-        if(pc!=null&&prev!=null&&Math.abs(pc-prev)>1e-9)
-          out.push({type,lbl,y:x.y,m:x.m,mc,sev:'warn',what:'เลขต้นเดือนไม่ตรงกับปลายเดือนก่อน',detail:`${MN[p.m-1]} ${p.y} จบที่ ${fmt(pc,dp)} แต่เดือนนี้เริ่มที่ ${fmt(prev,dp)}`});
-      }
       if(used!=null&&med&&med>0&&used>med*4)
         out.push({type,lbl,y:x.y,m:x.m,mc,sev:'warn',what:'หน่วยสูงผิดปกติ',detail:`ใช้ ${fmt(used,dp?1:0)} ขณะที่ปกติราว ${fmt(med,dp?1:0)}`});
     });
@@ -652,13 +677,15 @@ async function loadAll(manual){
     if(d.settings&&typeof d.settings==='object') S.settings=Object.assign({},DEFAULT_SETTINGS,S.settings,d.settings);
     const pick=(k,local)=>{ const sv=d[k]||[]; return (sv.length||!local.length)?sv:local; };
     S.meter_config = (d.meter_config&&d.meter_config.length) ? d.meter_config.map(m=>({...m,
+      code: fixCode(m.code),
       multiplier:+m.multiplier||1, sort:+m.sort||0,
       active:!(m.active===false||m.active==='FALSE'||m.active==='false')})) : S.meter_config;
     S.elec_bill   = pick('elec_bill',  S.elec_bill);
     S.elec_meter  = pick('elec_meter', S.elec_meter);
     S.water_bill  = pick('water_bill', S.water_bill);
     S.water_meter = pick('water_meter',S.water_meter);
-    S.shops       = pick('shops',       S.shops||[]).map(x=>({...x,active:!(x.active===false||x.active==='FALSE'||x.active==='false')}));
+    S.shops       = pick('shops',       S.shops||[]).map(x=>({...x,code:unq(x.code),name:unq(x.name),note:unq(x.note),
+                      active:!(x.active===false||x.active==='FALSE'||x.active==='false')}));
     S.shop_meter  = pick('shop_meter',  S.shop_meter||[]);
     ensureMeters(); saveCache();
     setSync('ok',`เชื่อมต่อแล้ว · ${d.version||''}`);
@@ -671,6 +698,15 @@ async function loadAll(manual){
     loadCache(); ensureMeters(); renderWarn(); renderQ(); refresh();
   }
 }
+/** Google Sheets เคยแปลง "(26)" เป็น -26 — แปลงกลับให้อัตโนมัติ */
+function fixCode(c){
+  if(c==null||c==='') return '';
+  if(typeof c==='number'&&c<0) return '('+Math.abs(c)+')';
+  const t=String(c).trim().replace(/^'/,'');   // ' นำหน้าเป็นแค่ตัวบังคับให้เป็นข้อความ
+  if(/^-\d+(\.0+)?$/.test(t)) return '('+Math.abs(parseFloat(t))+')';
+  return t;
+}
+const unq = v => (typeof v==='string') ? v.replace(/^'/,'') : v;
 function ensureMeters(){
   if(!S.meter_config||!S.meter_config.length) S.meter_config=DEFAULT_METERS.map(m=>({...m}));
 }
@@ -788,9 +824,13 @@ function elecLoad(){
   if(!y||!m) return;
   const [py,pm]=prevYM(y,m);
   meters('elec').forEach(mc=>{
-    const pr=meterRow('elec',py,pm,mc.id), cr=meterRow('elec',y,m,mc.id);
-    const pv = cr && n(cr.prev_raw)!=null ? n(cr.prev_raw) : (pr? n(pr.curr_raw) : null);
-    $('ep-'+mc.id).value = pv!=null?pv:'';
+    const cr=meterRow('elec',y,m,mc.id);
+    const pv=chainPrev('elec',y,m,mc.id), linked=hasPrevRow('elec',y,m,mc.id);
+    const el=$('ep-'+mc.id);
+    el.value = pv!=null?pv:'';
+    el.readOnly=linked; el.tabIndex=linked?-1:0;
+    el.className = linked?'mi mi-p':'mi';
+    el.title = linked?'ดึงจากเลขปลายเดือนก่อนอัตโนมัติ — ถ้าผิดให้ไปแก้ที่เดือนก่อน':'เดือนแรกสุดของมิเตอร์นี้ กรอกเลขตั้งต้นได้';
     $('ec-'+mc.id).value = cr && n(cr.curr_raw)!=null ? n(cr.curr_raw) : '';
   });
   const b=billOf('elec',y,m);
@@ -862,9 +902,10 @@ async function elecSave(){
   const cfg=meters('elec');
   const rows=[]; let any=false;
   cfg.forEach(mc=>{
-    const pv=n($('ep-'+mc.id).value), cv=n($('ec-'+mc.id).value);
+    const cv=n($('ec-'+mc.id).value);
     if(cv==null) return;
     any=true;
+    const pv = hasPrevRow('elec',y,m,mc.id) ? chainPrev('elec',y,m,mc.id) : n($('ep-'+mc.id).value);
     const used = (pv!=null&&cv>=pv) ? r2((cv-pv)*(+mc.multiplier||1)) : null;
     const ex=meterRow('elec',y,m,mc.id);
     rows.push({ id: ex?ex.id:uid('em_'), year:y, month:m, meter_id:mc.id, floor:mc.floor,
@@ -885,8 +926,10 @@ async function elecSave(){
   let ok=true, err='';
   const r1=await saveSheet('elec_bill',[bill]); if(!r1.ok){ok=false;err=r1.error;}
   if(rows.length){ const r2_=await saveSheet('elec_meter',rows); if(!r2_.ok){ok=false;err=r2_.error;} }
+  const fixed=await refreshNext('elec',y,m);
   btn.disabled=false; btn.innerHTML='✓ บันทึก';
   elecLoad(); badges();
+  if(fixed) toast(`คิดหน่วยเดือนถัดไปใหม่ให้แล้ว ${fixed} มิเตอร์`);
   $('e-msg').innerHTML = ok
     ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · มิเตอร์ ${rows.length} ตัว</div></div>`
     : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว กดปุ่มส้มมุมซ้ายล่างเพื่อส่งซ้ำ<br><span style="font-size:11.5px">${esc(err)}</span></div></div>`;
@@ -930,9 +973,13 @@ function waterLoad(){
   if(!y||!m) return;
   const [py,pm]=prevYM(y,m);
   meters('water').forEach(mc=>{
-    const pr=meterRow('water',py,pm,mc.id), cr=meterRow('water',y,m,mc.id);
-    const pv = cr && n(cr.prev_raw)!=null ? n(cr.prev_raw) : (pr? n(pr.curr_raw) : null);
-    $('wp-'+mc.id).value = pv!=null?pv:'';
+    const cr=meterRow('water',y,m,mc.id);
+    const pv=chainPrev('water',y,m,mc.id), linked=hasPrevRow('water',y,m,mc.id);
+    const el=$('wp-'+mc.id);
+    el.value = pv!=null?pv:'';
+    el.readOnly=linked; el.tabIndex=linked?-1:0;
+    el.className = linked?'mi mi-p':'mi';
+    el.title = linked?'ดึงจากเลขปลายเดือนก่อนอัตโนมัติ — ถ้าผิดให้ไปแก้ที่เดือนก่อน':'เดือนแรกสุดของมิเตอร์นี้ กรอกเลขตั้งต้นได้';
     $('wc-'+mc.id).value = cr && n(cr.curr_raw)!=null ? n(cr.curr_raw) : '';
   });
   const b=billOf('water',y,m);
@@ -970,9 +1017,10 @@ async function waterSave(){
   const cfg=meters('water');
   const rows=[]; let any=false, sub=0;
   cfg.forEach(mc=>{
-    const pv=n($('wp-'+mc.id).value), cv=n($('wc-'+mc.id).value);
+    const cv=n($('wc-'+mc.id).value);
     if(cv==null) return;
     any=true;
+    const pv = hasPrevRow('water',y,m,mc.id) ? chainPrev('water',y,m,mc.id) : n($('wp-'+mc.id).value);
     const used=(pv!=null&&cv>=pv)?r2((cv-pv)*(+mc.multiplier||1)):null;
     if(used!=null) sub+=used;
     const ex=meterRow('water',y,m,mc.id);
@@ -985,7 +1033,7 @@ async function waterSave(){
   const bill={ id: exB?exB.id:uid('wb_'), year:y, month:m,
     total_unit: tu!=null?tu:(sub>0?r2(sub):null),
     total_cost: tc!=null?tc:(sub>0?r2(sub*rate):null),
-    rate, remark:$('w-note').value||'' };
+    rate, src: (tu!=null||tc!=null)?'bill':'submeter', remark:$('w-note').value||'' };
   if(!any && tu==null && tc==null) return toast('ยังไม่มีอะไรให้บันทึก');
 
   const btn=$('w-save'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…';
@@ -996,8 +1044,10 @@ async function waterSave(){
   let ok=true, err='';
   const a=await saveSheet('water_bill',[bill]); if(!a.ok){ok=false;err=a.error;}
   if(rows.length){ const b=await saveSheet('water_meter',rows); if(!b.ok){ok=false;err=b.error;} }
+  const fixed=await refreshNext('water',y,m);
   btn.disabled=false; btn.innerHTML='✓ บันทึก';
   waterLoad(); badges();
+  if(fixed) toast(`คิดหน่วยเดือนถัดไปใหม่ให้แล้ว ${fixed} มิเตอร์`);
   $('w-msg').innerHTML = ok
     ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · มิเตอร์ ${rows.length} ตัว</div></div>`
     : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11.5px">${esc(err)}</span></div></div>`;
@@ -1286,6 +1336,73 @@ async function testConn(){
     el.innerHTML=`<div class="al al-b"><span class="al-ic">✗</span><div>เชื่อมต่อไม่สำเร็จ: ${esc(e.message)}<br>
       <span style="font-size:11.5px">ตรวจว่า Deploy เป็น Web app · Execute as: Me · Who has access: Anyone</span></div></div>`;
   }
+}
+/** หลังบันทึกเดือน M แล้ว เดือน M+1 ต้องคิดหน่วยใหม่ด้วย (เลขต้นเดือนเปลี่ยน) */
+async function refreshNext(type,y,m){
+  const [ny,nm] = (m===12)?[y+1,1]:[y,m+1];
+  const L = type==='elec'?S.elec_meter:S.water_meter;
+  const rows=[];
+  meters(type).forEach(mc=>{
+    const r=L.find(x=>+x.year===ny&&+x.month===nm&&x.meter_id===mc.id);
+    if(!r) return;
+    const pv=chainPrev(type,ny,nm,mc.id), uu=usedOf(type,ny,nm,mc);
+    if(n(r.prev_raw)===pv && n(r.used_unit)===uu) return;
+    r.prev_raw=pv; r.used_unit=uu;
+    rows.push({...r});
+  });
+  // ยอดบิลค่าน้ำที่ระบบคิดเองของเดือนถัดไป
+  if(type==='water'){
+    const b=(S.water_bill||[]).find(x=>+x.year===ny&&+x.month===nm&&String(x.src||'')==='submeter');
+    if(b){ const c=compute('water',ny,nm);
+      if(n(b.total_unit)!==c.totalUnit||n(b.total_cost)!==c.totalCost){
+        b.total_unit=c.totalUnit; b.total_cost=c.totalCost;
+        await saveSheet('water_bill',[{...b}]);
+      } }
+  }
+  if(!rows.length) return 0;
+  saveCache();
+  await saveSheet(type==='elec'?'elec_meter':'water_meter',rows);
+  return rows.length;
+}
+
+/** คำนวณ prev/used ใหม่ทั้งหมดจากลูกโซ่ แล้วส่งขึ้น Sheet — ใช้หลังแก้ตัวเลขย้อนหลัง */
+async function rebuildAll(silent){
+  const box=$('s-fix');
+  if(box) box.innerHTML='<span class="spin"></span> กำลังคำนวณใหม่…';
+  let changed=0, pushed=0, failed=0;
+  for(const type of ['elec','water']){
+    const cfg=meters(type), L=(type==='elec'?S.elec_meter:S.water_meter);
+    const rows=[];
+    allMonths().forEach(([y,m])=>cfg.forEach(mc=>{
+      const r=L.find(x=>+x.year===y&&+x.month===m&&x.meter_id===mc.id);
+      if(!r) return;
+      const pv=chainPrev(type,y,m,mc.id), uu=usedOf(type,y,m,mc);
+      if(n(r.prev_raw)===pv && n(r.used_unit)===uu) return;
+      r.prev_raw=pv; r.used_unit=uu; r.multiplier=+mc.multiplier||1;
+      rows.push({...r}); changed++;
+    }));
+    if(rows.length){
+      for(let i=0;i<rows.length;i+=40){
+        const res=await saveSheet(type==='elec'?'elec_meter':'water_meter',rows.slice(i,i+40));
+        res.ok?pushed++:failed++;
+      }
+    }
+  }
+  // ยอดบิลค่าน้ำที่ระบบคิดเอง ให้อัปเดตตามมิเตอร์ใหม่
+  const wb=[];
+  (S.water_bill||[]).forEach(b=>{
+    if(String(b.src||'')!=='submeter') return;
+    const c=compute('water',+b.year,+b.month);
+    if(n(b.total_unit)===c.totalUnit && n(b.total_cost)===c.totalCost) return;
+    b.total_unit=c.totalUnit; b.total_cost=c.totalCost; wb.push({...b}); changed++;
+  });
+  if(wb.length){ const res=await saveSheet('water_bill',wb); res.ok?pushed++:failed++; }
+  saveCache(); refresh();
+  if(box) box.innerHTML = changed
+    ? `<div class="al ${failed?'al-w':'al-s'}" style="margin:8px 0 0"><span class="al-ic">${failed?'⚠️':'✓'}</span><div>คำนวณใหม่ <b>${changed} แถว</b> แล้ว${failed?` · ส่งขึ้น Sheet ไม่สำเร็จ ${failed} ก้อน (เข้าคิวค้างส่ง)`:' และส่งขึ้น Sheet เรียบร้อย'}</div></div>`
+    : '<div class="al al-s" style="margin:8px 0 0"><span class="al-ic">✓</span><div>ข้อมูลตรงกันหมดแล้ว ไม่มีอะไรต้องแก้</div></div>';
+  if(!silent&&changed) toast(`✓ คำนวณใหม่ ${changed} แถว`);
+  return changed;
 }
 function exportJSON(){
   const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
@@ -1669,7 +1786,7 @@ async function runSeed(){
         floor:mc?mc.floor:'',prev_raw:prev,curr_raw:curr,multiplier:1,used_unit:used});
     });
     wBills.push({id:`wb_${r[0]}_${r[1]}`,year:r[0],month:r[1],
-      total_unit:i>0?r2(sub):null,total_cost:i>0?r2(sub*rate):null,rate,remark:'นำเข้าข้อมูลตั้งต้น'});
+      total_unit:i>0?r2(sub):null,total_cost:i>0?r2(sub*rate):null,rate,src:'submeter',remark:'นำเข้าข้อมูลตั้งต้น'});
   });
 
   // local ก่อน แล้วค่อยส่งขึ้น Sheet
