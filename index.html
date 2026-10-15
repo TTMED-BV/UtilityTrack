@@ -1050,16 +1050,20 @@ async function loadAllFromSheets(manual){
     // Records
     S.records = (data.records||[]).map(r=>({
       id:String(r.id), building_id:String(r.building_id),
+      building_name:r.building_name||'', building_code:r.building_code||'',
       year:parseInt(r.year), month:parseInt(r.month),
       units:parseFloat(r.units), total:parseFloat(r.total),
-      rate:parseFloat(r.rate), note:r.note||''
+      rate:parseFloat(r.rate), note:r.note||'',
+      elec_meters:r.elec_meters||{}
     }));
     // Water records
     S.water_records = (data.water_records||[]).map(r=>({
       id:String(r.id), building_id:String(r.building_id),
+      building_name:r.building_name||'', building_code:r.building_code||'',
       year:parseInt(r.year), month:parseInt(r.month),
       units:parseFloat(r.units), total:parseFloat(r.total),
-      rate:parseFloat(r.rate), note:r.note||''
+      rate:parseFloat(r.rate), note:r.note||'',
+      floor_meters:r.floor_meters||{}, floors:r.floors||{}
     }));
     // Acks
     S.ack_log = (data.acks||[]).map(a=>({email:a.email,name:a.name,year:parseInt(a.year),month:parseInt(a.month),date:a.date}));
@@ -2672,7 +2676,8 @@ async function runImport(){
       id:prefix+bid+'_'+d.year+'_'+d.month,
       building_id:bid,building_name:bld.name,building_code:bld.code,
       year:d.year,month:d.month,units:d.units,total:d.total,rate:d.rate,
-      note:'นำเข้าจากไฟล์',meter_prev:d.mPrev,meter_curr:d.mCurr
+      note:'นำเข้าจากไฟล์',meter_prev:d.mPrev,meter_curr:d.mCurr,
+      ...(isW?{floor_meters:{},floors:{}}:{elec_meters:{}})
     };
     const i=arr.findIndex(r=>r.building_id===bid&&r.year===d.year&&r.month===d.month);
     if(i>=0){arr[i]=rec;upd++;}else{arr.push(rec);ins++;}
