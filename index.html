@@ -251,7 +251,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
       <div class="brand-icon">💧⚡</div>
       <div>
         <div class="brand-name">ระบบบันทึกค่าน้ำค่าไฟฟ้า</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px">v2.2 · 2026-10-15</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">v2.4 · 2026-10-15</div>
       </div>
     </div>
     <div class="brand-sub" id="org-name-side">คณะการแพทย์แผนไทย</div>
@@ -261,6 +261,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
     <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">🏠</span> แดชบอร์ด</div>
     <div class="nav-item" onclick="nav('entry',this)"><span class="nav-icon">⚡</span> บันทึกค่าไฟ<span class="nav-badge" id="missing-badge" style="display:none">!</span></div>
     <div class="nav-item" onclick="nav('water',this)"><span class="nav-icon">💧</span> บันทึกค่าน้ำ<span class="nav-badge" id="missing-water-badge" style="display:none">!</span></div>
+    <div class="nav-item" onclick="nav('water-report',this)"><span class="nav-icon">📊</span> รายงานมิเตอร์น้ำ</div>
     <div class="nav-sec">วิเคราะห์</div>
     <div class="nav-item" onclick="nav('compare',this)"><span class="nav-icon">📊</span> เปรียบเทียบปี</div>
     <div class="nav-item" onclick="nav('trend',this)"><span class="nav-icon">📈</span> แนวโน้ม</div>
@@ -277,6 +278,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
   <div class="sidebar-foot">
     <div id="role-badge" style="margin-bottom:6px"></div>
     <span id="sync-status"><span class="sync-dot sync-pending"></span>กำลังเชื่อมต่อ...</span>
+    <div id="pending-badge" style="margin-top:6px"></div>
     <div style="margin-top:6px;font-size:10px;color:var(--text3);opacity:.8">พัฒนาโดย Panithan Kaewcharoen</div>
     <button class="btn btn-xs btn-ghost" style="margin-top:6px;width:100%;justify-content:center" id="admin-toggle-btn" onclick="toggleAdminMode()">🔑 Admin</button>
   </div>
@@ -295,6 +297,8 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
 </div>
 
 <div class="content">
+
+<div id="backend-warn"></div>
 
 <div class="page active" id="page-dashboard">
   <div id="dash-alerts"></div>
@@ -472,6 +476,56 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
         <div id="water-entry-status"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="page" id="page-water-report">
+  <div class="card mb16">
+    <div class="card-header">
+      <div><div class="card-title">📊 รายงานมิเตอร์น้ำรายชั้น</div><div class="card-sub">หน่วยการใช้น้ำแต่ละชั้น ทุกเดือน</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="wr-bld" class="btn btn-sm" style="padding:5px 8px;width:auto" onchange="renderWaterReport()"></select>
+        <select id="wr-yr" class="btn btn-sm" style="padding:5px 8px;width:auto" onchange="renderWaterReport()"></select>
+        <button class="btn btn-sm" style="background:var(--teal-l);color:var(--teal-d)" onclick="openWaterReportImport()">📥 นำเข้าข้อมูลหลายเดือน</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="wr-table" style="width:100%;border-collapse:collapse;font-size:13px"></table>
+    </div>
+    <div id="wr-msg" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+  </div>
+</div>
+
+<!-- Water Report Import Modal -->
+<div id="mo-water-import" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--r-lg);padding:24px;width:min(700px,95vw);max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:700">📥 นำเข้าข้อมูลมิเตอร์น้ำ (หลายเดือน)</div>
+      <button class="btn btn-ghost btn-icon" onclick="closeWaterReportImport()">✕</button>
+    </div>
+    <div style="background:var(--teal-l);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;font-size:12px;color:var(--teal-d);line-height:1.7">
+      <b>รองรับ 2 รูปแบบ — ระบบตรวจจับให้อัตโนมัติ</b><br>
+      <b>① เลขมิเตอร์ (ข้อความ)</b> — บรรทัดชื่อเดือน แล้วบรรทัดเลขมิเตอร์<br>
+      <code style="font-size:11px;background:rgba(0,0,0,.06);padding:2px 4px;border-radius:4px;display:inline-block">ธันวาคม 2567<br>(26) 0012334 | (27) 000208 | (29) 000419 | (29) 000148 | ...</code><br>
+      <span style="font-size:11px">วางติดกันหลายเดือนได้เลย · ระบบจะเรียงเดือนและ<b>คำนวณหน่วยที่ใช้จากผลต่างเลขมิเตอร์</b>ให้เอง</span><br>
+      <b style="display:inline-block;margin-top:6px">② CSV หน่วยที่ใช้</b> —
+      <code style="font-size:11px;background:rgba(0,0,0,.06);padding:2px 4px;border-radius:4px">ปี,เดือน,B,1,2,3,4,5,6,7,อัตรา</code>
+      <span style="font-size:11px">(ปี = พ.ศ. · เดือน = 1-12)</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <select id="wri-bld" class="btn" style="flex:1;min-width:200px;padding:8px 12px" onchange="previewWaterImport()"></select>
+      <input type="number" id="wri-rate" min="0" step="0.0001" placeholder="อัตรา บาท/ลบ.ม."
+        oninput="previewWaterImport()" title="ราคาต่อหน่วย (ใช้กับรูปแบบเลขมิเตอร์)"
+        style="width:150px;padding:8px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:13px">
+    </div>
+    <textarea id="wri-csv" rows="8" placeholder="วางข้อมูลที่นี่... (เลขมิเตอร์แบบข้อความ หรือ CSV)" oninput="previewWaterImport()"
+      style="width:100%;padding:10px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-family:monospace;font-size:12px;resize:vertical;margin-bottom:10px"></textarea>
+    <div id="wri-preview" style="overflow-x:auto;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeWaterReportImport()">ยกเลิก</button>
+      <button class="btn btn-primary" id="wri-run-btn" onclick="runWaterImport()" disabled>✓ นำเข้า</button>
+    </div>
+    <div id="wri-msg" style="margin-top:10px;font-size:13px"></div>
   </div>
 </div>
 
@@ -1006,17 +1060,116 @@ function setSyncStatus(state,msg){
   el.innerHTML=`<span class="sync-dot ${dotClass}"></span>${msg}`;
 }
 
-async function apiCall(action, dataObj){
+async function apiCall(action, dataObj, extra){
   if(!API_URL){ throw new Error('ยังไม่ได้ตั้งค่า API URL'); }
   const params=new URLSearchParams();
   params.set('action',action);
-  if(dataObj!==undefined) params.set('data', JSON.stringify(dataObj));
+  if(dataObj!==undefined && dataObj!==null) params.set('data', JSON.stringify(dataObj));
+  if(extra) Object.keys(extra).forEach(k=>{ if(extra[k]!=null) params.set(k,extra[k]); });
   const url = API_URL + '?' + params.toString();
-  const res = await fetch(url, { method:'GET' }); // Apps Script รองรับ GET พร้อม query params ได้ดีกว่าเรื่อง CORS
+  let res;
+  if(url.length>6000){
+    // payload ยาวเกิน query string → ส่งแบบ POST (text/plain เพื่อไม่ให้ติด CORS preflight)
+    res = await fetch(API_URL, { method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action,data:dataObj},extra||{})) });
+  } else {
+    res = await fetch(url, { method:'GET', redirect:'follow' }); // Apps Script รองรับ GET พร้อม query params ได้ดีกว่าเรื่อง CORS
+  }
   if(!res.ok) throw new Error('HTTP '+res.status);
-  const json = await res.json();
+  const text = await res.text();
+  let json;
+  try{ json = JSON.parse(text); }
+  catch(e){ throw new Error('ตอบกลับไม่ใช่ JSON — ตรวจว่า Deploy เป็น "Anyone" และ paste Code.gs ตัวใหม่แล้ว'); }
   if(json.error) throw new Error(json.error);
   return json;
+}
+function apiDelete(action,id){ return apiCall(action,undefined,{id}); }
+
+/* ===================== คิวข้อมูลค้างส่ง (กันข้อมูลหายเวลาเน็ตหลุด / backend ยังไม่พร้อม) ===================== */
+function loadPending(){ try{ return JSON.parse(localStorage.getItem('et_pending')||'[]'); }catch(e){ return []; } }
+function savePendingQ(q){ try{ localStorage.setItem('et_pending',JSON.stringify(q.slice(-800))); }catch(e){} }
+function pendingCount(){ return loadPending().length; }
+function queuePending(action,data,id){
+  const q=loadPending();
+  const key=action+'|'+(id||(data&&data.id)||'');
+  const item={action,data,id,ts:Date.now()};
+  const i=q.findIndex(x=>(x.action+'|'+(x.id||(x.data&&x.data.id)||''))===key);
+  if(i>=0) q[i]=item; else q.push(item);
+  savePendingQ(q); renderPendingBadge();
+}
+// บันทึกขึ้น Sheet — ถ้าไม่สำเร็จจะเข้าคิวไว้ส่งซ้ำ ไม่ทิ้งข้อมูล
+async function apiSave(action,data){
+  try{ const res=await apiCall(action,data); return {ok:true,res}; }
+  catch(e){ queuePending(action,data); return {ok:false,error:e.message}; }
+}
+// ถ้า Sheet มีแถวเดิมอยู่แล้ว (เจอด้วยอาคาร+ปี+เดือน) ให้ยึด id ของชีตเป็นหลัก — กันแถวซ้ำ/ลบไม่ได้
+function reconcileId(list,rec,res){
+  if(!res||!res.id||res.id===rec.id) return;
+  const i=list.findIndex(x=>x.id===rec.id);
+  if(i>=0) list[i].id=res.id;
+  rec.id=res.id; sv();
+}
+function renderPendingBadge(){
+  const el=document.getElementById('pending-badge');
+  if(!el)return;
+  const n=pendingCount();
+  el.innerHTML = n
+    ? `<button class="btn btn-xs" style="width:100%;justify-content:center;background:var(--amber-l);color:var(--amber-d);border-color:var(--amber);font-weight:700" onclick="flushPending(true)">⏳ ค้างส่ง ${n} — กดส่งซ้ำ</button>`
+    : '';
+}
+async function flushPending(manual){
+  const q=loadPending();
+  if(!q.length){ if(manual) showToast('ไม่มีข้อมูลค้างส่ง'); return {ok:0,fail:0}; }
+  const el=document.getElementById('pending-badge');
+  if(el) el.innerHTML='<div style="font-size:10px;color:var(--amber-d)"><span class="spinner"></span> กำลังส่งข้อมูลค้าง...</div>';
+  let ok=0; const rest=[];
+  for(const it of q){
+    try{ await apiCall(it.action,it.data,it.id?{id:it.id}:undefined); ok++; }
+    catch(e){ rest.push(it); }
+  }
+  savePendingQ(rest); renderPendingBadge();
+  if(manual) showToast(ok?`✓ ส่งขึ้น Sheet แล้ว ${ok} รายการ${rest.length?` · ยังค้าง ${rest.length}`:''}`:`⚠ ส่งไม่สำเร็จ ${rest.length} รายการ`);
+  if(ok) { renderWaterReport&&document.getElementById('page-water-report')?.classList.contains('active')&&renderWaterReport(); }
+  return {ok,fail:rest.length};
+}
+
+/* ===================== ตัวช่วยอ่านข้อมูลจาก Sheet ===================== */
+function parseMaybeJSON(v){
+  if(v==null||v==='') return {};
+  if(typeof v==='object') return v;
+  if(typeof v==='string'){ const s=v.trim(); if(!s) return {}; try{ const o=JSON.parse(s); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+  return {};
+}
+function numOrNull(v){ if(v===''||v==null) return null; const n=parseFloat(v); return isNaN(n)?null:n; }
+// สร้าง elec_meters กลับมาจากคอลัมน์ m1_curr..m4_curr ถ้า JSON หาย
+function rebuildElecMeters(r){
+  const em=parseMaybeJSON(r.elec_meters);
+  ELEC_METER_CONFIG.forEach(mk=>{
+    if(em[mk.key]==null){ const c=numOrNull(r['m'+mk.key+'_curr']); if(c!=null) em[mk.key]=c; }
+  });
+  return em;
+}
+// สร้าง floor_meters / floors กลับมาจากคอลัมน์ wm_*_curr / wm_*_units + เติม key รายชั้นให้รายงานอ่านได้
+function rebuildWaterMeters(r){
+  const fm=parseMaybeJSON(r.floor_meters);
+  const fl=parseMaybeJSON(r.floors);
+  WATER_FLOOR_CONFIG.forEach(fc=>{
+    let fu=0,any=false;
+    fc.meters.forEach(mk=>{
+      if(fm[mk.key]==null){ const c=numOrNull(r['wm_'+mk.key+'_curr']); if(c!=null) fm[mk.key]=c; }
+      if(fl[mk.key]==null){ const u=numOrNull(r['wm_'+mk.key+'_units']); if(u!=null) fl[mk.key]=u; }
+      if(fl[mk.key]!=null){ fu+=fl[mk.key]; any=true; }
+    });
+    if(fl[fc.floor]==null&&any) fl[fc.floor]=Math.round(fu*100)/100;
+  });
+  return {floor_meters:fm,floors:fl};
+}
+// ถ้า Sheet ตอบว่าง แต่ในเครื่องมีข้อมูล → ไม่ทับ (กันข้อมูลในเครื่องหาย)
+function mergeFromSheet(hasKey,serverList,localList){
+  if(!hasKey) return {list:localList,localOnly:localList.length>0};
+  if((!serverList||!serverList.length)&&localList&&localList.length) return {list:localList,localOnly:true};
+  return {list:serverList||[],localOnly:false};
 }
 
 async function loadAllFromSheets(manual){
@@ -1047,36 +1200,100 @@ async function loadAllFromSheets(manual){
         if(b){ b.subs.push({id:String(s.id),name:s.name,code:s.code}); }
       });
     }
-    // Records
-    S.records = (data.records||[]).map(r=>({
+    // Records (ค่าไฟ)
+    const srvRec = (data.records||[]).map(r=>({
       id:String(r.id), building_id:String(r.building_id),
       building_name:r.building_name||'', building_code:r.building_code||'',
       year:parseInt(r.year), month:parseInt(r.month),
-      units:parseFloat(r.units), total:parseFloat(r.total),
-      rate:parseFloat(r.rate), note:r.note||'',
-      elec_meters:r.elec_meters||{}
-    }));
-    // Water records
-    S.water_records = (data.water_records||[]).map(r=>({
-      id:String(r.id), building_id:String(r.building_id),
-      building_name:r.building_name||'', building_code:r.building_code||'',
-      year:parseInt(r.year), month:parseInt(r.month),
-      units:parseFloat(r.units), total:parseFloat(r.total),
-      rate:parseFloat(r.rate), note:r.note||'',
-      floor_meters:r.floor_meters||{}, floors:r.floors||{}
-    }));
+      units:parseFloat(r.units)||0, total:parseFloat(r.total)||0,
+      rate:parseFloat(r.rate)||0, note:r.note||'',
+      elec_meters:rebuildElecMeters(r)
+    })).filter(r=>r.year&&r.month);
+    const mRec=mergeFromSheet('records' in data, srvRec, S.records||[]);
+    S.records=mRec.list;
+
+    // Water records (ค่าน้ำ) — ถ้า backend เก่าไม่มี key นี้ ต้องไม่ล้างข้อมูลในเครื่อง
+    const srvWat = (data.water_records||[]).map(r=>{
+      const w=rebuildWaterMeters(r);
+      return {
+        id:String(r.id), building_id:String(r.building_id),
+        building_name:r.building_name||'', building_code:r.building_code||'',
+        year:parseInt(r.year), month:parseInt(r.month),
+        units:parseFloat(r.units)||0, total:parseFloat(r.total)||0,
+        rate:parseFloat(r.rate)||0, note:r.note||'',
+        floor_meters:w.floor_meters, floors:w.floors
+      };
+    }).filter(r=>r.year&&r.month);
+    const mWat=mergeFromSheet('water_records' in data, srvWat, S.water_records||[]);
+    S.water_records=mWat.list;
+
     // Acks
-    S.ack_log = (data.acks||[]).map(a=>({email:a.email,name:a.name,year:parseInt(a.year),month:parseInt(a.month),date:a.date}));
+    if('acks' in data) S.ack_log = (data.acks||[]).map(a=>({email:a.email,name:a.name,year:parseInt(a.year),month:parseInt(a.month),date:a.date}));
+
+    // Shops / Shop records
+    const mShop=mergeFromSheet('shops' in data, (data.shops||[]).map(s=>({
+      id:String(s.id),name:s.name||'',code:s.code||'',note:s.note||'',
+      active:(s.active===true||s.active==='TRUE'||s.active==='true'||s.active===1)
+    })), S.shops||[]);
+    S.shops=mShop.list;
+    const mSR=mergeFromSheet('shop_records' in data, (data.shop_records||[]).map(r=>({
+      id:String(r.id),shop_id:String(r.shop_id),year:parseInt(r.year),month:parseInt(r.month),
+      elec_prev:numOrNull(r.elec_prev),elec_curr:numOrNull(r.elec_curr),
+      elec_units:parseFloat(r.elec_units)||0,elec_total:parseFloat(r.elec_total)||0,
+      water_prev:numOrNull(r.water_prev),water_curr:numOrNull(r.water_curr),
+      water_units:parseFloat(r.water_units)||0,water_total:parseFloat(r.water_total)||0,
+      grand_total:parseFloat(r.grand_total)||0,timestamp:r.timestamp||''
+    })).filter(r=>r.year&&r.month), S.shop_records||[]);
+    S.shop_records=mSR.list;
+
+    // Settings (ถ้ามีในชีต)
+    if(data.settings&&typeof data.settings==='object'){
+      ['org','base_year','budget','water_budget','fixed_elec_rate','fixed_water_rate',
+       'shop_t1max','shop_t2max','shop_r1','shop_r2','shop_r3','shop_water_rate'].forEach(k=>{
+        if(data.settings[k]!==undefined&&data.settings[k]!=='') S.settings[k]=data.settings[k];
+      });
+    }
+
+    BACKEND = {
+      version: data.version||'(เก่า)',
+      hasWater: ('water_records' in data),
+      hasShops: ('shops' in data),
+      hasSettings: ('settings' in data),
+      localOnly: {water:mWat.localOnly, shops:mShop.localOnly, shopRecs:mSR.localOnly, elec:mRec.localOnly}
+    };
 
     sv();
-    setSyncStatus('ok','เชื่อมต่อ Google Sheets แล้ว');
+    setSyncStatus(BACKEND.hasWater?'ok':'err', BACKEND.hasWater?'เชื่อมต่อ Google Sheets แล้ว':'Sheets เชื่อมได้ แต่ backend ยังไม่รองรับค่าน้ำ');
+    renderBackendWarn();
+    renderPendingBadge();
     refreshCurrentPage();
+    if(BACKEND.hasWater) flushPending(false);   // มีอะไรค้างส่ง ลองส่งให้เอง
   }catch(err){
     console.error(err);
     setSyncStatus('err','ใช้ข้อมูลสำรองในเครื่อง (ออฟไลน์)');
     ldCache();
+    renderPendingBadge();
     refreshCurrentPage();
   }
+}
+
+let BACKEND={version:null,hasWater:null,hasShops:null,hasSettings:null,localOnly:{}};
+function renderBackendWarn(){
+  const el=document.getElementById('backend-warn');
+  if(!el)return;
+  const msgs=[];
+  if(BACKEND.hasWater===false){
+    msgs.push(`<b>Apps Script ยังไม่รองรับการบันทึกค่าน้ำ</b> — ข้อมูลค่าน้ำ/ร้านเช่าเก็บอยู่ใน browser เครื่องนี้เท่านั้น ถ้าเคลียร์ browser หรือเปลี่ยนเครื่องจะหาย<br>
+      แก้โดย paste ไฟล์ <code>Code.gs</code> ตัวใหม่ลงใน Apps Script แล้ว Deploy เป็น New version (ใช้ deployment เดิม URL ไม่เปลี่ยน)`);
+  }
+  const lo=BACKEND.localOnly||{};
+  if(BACKEND.hasWater===true&&(lo.water||lo.shops||lo.shopRecs)){
+    msgs.push(`<b>มีข้อมูลที่ยังไม่ขึ้น Sheet</b> — ${[lo.water?`ค่าน้ำ ${S.water_records.length} เดือน`:'',lo.shops?`ร้านเช่า ${S.shops.length} ร้าน`:'',lo.shopRecs?`บิลร้าน ${S.shop_records.length} รายการ`:''].filter(Boolean).join(' · ')}
+      <br>ไปหน้า <b>ตั้งค่า</b> กด <b>⬆ Sync ข้อมูลทั้งหมดขึ้น Sheet</b> หนึ่งครั้ง`);
+  }
+  el.innerHTML = msgs.length
+    ? `<div class="alert alert-err" style="align-items:flex-start"><span class="alert-icon">⚠️</span><div style="line-height:1.7">${msgs.join('<hr style="border:none;border-top:1px solid rgba(0,0,0,.1);margin:8px 0">')}</div></div>`
+    : '';
 }
 
 function refreshCurrentPage(){
@@ -1172,11 +1389,11 @@ function addShop(){
   document.getElementById('ns-code').value='';
   document.getElementById('ns-note').value='';
   renderShops();
-  apiCall('saveshop',shop).catch(()=>{});
+  apiSave('saveshop',shop).then(r=>{if(!r.ok)renderPendingBadge();});
 }
 function toggleShop(id){
   const s=S.shops.find(x=>x.id===id);
-  if(s){s.active=!s.active; sv(); renderShops(); apiCall('saveshop',s).catch(()=>{});}
+  if(s){s.active=!s.active; sv(); renderShops(); apiSave('saveshop',s).then(r=>{if(!r.ok)renderPendingBadge();});}
 }
 
 // แปลงชื่อเดือนไทยย่อ → เลขเดือน
@@ -1195,7 +1412,7 @@ function importShopCSV(){
   if(!shop){
     shop={id:'s'+Date.now(),name,code,note:'นำเข้าจาก CSV',active:true};
     S.shops.push(shop);
-    apiCall('saveshop',shop).catch(()=>{});
+    apiSave('saveshop',shop).then(r=>{if(!r.ok)renderPendingBadge();});
   }
   const sid=shop.id;
 
@@ -1242,7 +1459,7 @@ function importShopCSV(){
     if(idx>=0){rec.id=S.shop_records[idx].id;S.shop_records[idx]=rec;}
     else S.shop_records.push(rec);
     imported++;
-    apiCall('saveshoprecord',rec).catch(()=>{});
+    apiSave('saveshoprecord',rec).then(r=>{if(!r.ok)renderPendingBadge();});
   }
 
   sv(); cm('mo-import-shop');
@@ -1253,11 +1470,11 @@ function importShopCSV(){
 function delShop(id){
   if(!confirm('ลบร้านนี้? ข้อมูลมิเตอร์ของร้านนี้จะถูกลบด้วย')) return;
   // ลบ shop records ใน sheets ด้วย
-  S.shop_records.filter(r=>r.shop_id===id).forEach(r=>{try{fetch(API_URL+'?action=deleteshoprecord&id='+encodeURIComponent(r.id));}catch(e){}});
+  S.shop_records.filter(r=>r.shop_id===id).forEach(r=>{apiDelete('deleteshoprecord',r.id).catch(()=>queuePending('deleteshoprecord',undefined,r.id));});
   S.shops=S.shops.filter(x=>x.id!==id);
   S.shop_records=S.shop_records.filter(r=>r.shop_id!==id);
   sv(); renderShops();
-  try{fetch(API_URL+'?action=deleteshop&id='+encodeURIComponent(id));}catch(e){}
+  apiDelete('deleteshop',id).catch(()=>queuePending('deleteshop',undefined,id));
 }
 
 function loadShopRates(){
@@ -1277,7 +1494,8 @@ function saveShopRates(){
   S.settings.shop_water_rate=g('sr-water')||24;
   sv();
   const st=document.getElementById('shop-rate-status');
-  if(st){st.textContent='✅ บันทึกแล้ว';setTimeout(()=>st.textContent='',2500);}
+  if(st){st.textContent='⏳ กำลังบันทึก...';}
+  pushSettings(true).then(r=>{ if(st){st.textContent=r.ok?'✅ บันทึกขึ้น Sheet แล้ว':'⚠ บันทึกในเครื่อง (ค้างส่ง)';setTimeout(()=>st.textContent='',3000);} });
 }
 
 function renderShopEntryTable(){
@@ -1370,7 +1588,7 @@ function saveShopEntry(sid, y, m){
   if(idx>=0){rec.id=S.shop_records[idx].id;S.shop_records[idx]=rec;}
   else S.shop_records.push(rec);
   sv();
-  apiCall('saveshoprecord',rec).catch(()=>{});
+  apiSave('saveshoprecord',rec).then(r=>{if(!r.ok)renderPendingBadge();});
 }
 
 function saveAllShopEntries(y, m){
@@ -1557,11 +1775,12 @@ function nav(id,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(el)el.classList.add('active');
-  const titles={dashboard:'แดชบอร์ด',entry:'⚡ บันทึกค่าไฟ',water:'💧 บันทึกค่าน้ำ',compare:'เปรียบเทียบปี',trend:'แนวโน้มรายปี',heatmap:'Heatmap',table:'ตารางรายงาน',buildings:'จัดการอาคาร',notify:'รายงานค่าน้ำค่าไฟรายเดือน',settings:'ตั้งค่า',shops:'🏪 จัดการร้านเช่า','shop-entry':'📝 บันทึกมิเตอร์ร้านเช่า','shop-report':'🧾 รายงานร้านเช่า'};
+  const titles={dashboard:'แดชบอร์ด',entry:'⚡ บันทึกค่าไฟ',water:'💧 บันทึกค่าน้ำ','water-report':'📊 รายงานมิเตอร์น้ำ',compare:'เปรียบเทียบปี',trend:'แนวโน้มรายปี',heatmap:'Heatmap',table:'ตารางรายงาน',buildings:'จัดการอาคาร',notify:'รายงานค่าน้ำค่าไฟรายเดือน',settings:'ตั้งค่า',shops:'🏪 จัดการร้านเช่า','shop-entry':'📝 บันทึกมิเตอร์ร้านเช่า','shop-report':'🧾 รายงานร้านเช่า'};
   document.getElementById('pg-title').textContent=titles[id]||id;
   if(id==='dashboard')renderDash();
   if(id==='entry'){renderEntryForm();renderEntryStatus();}
   if(id==='water'){renderWaterEntryForm();renderWaterEntryStatus();}
+  if(id==='water-report')renderWaterReport();
   if(id==='compare')renderCompare();
   if(id==='trend')renderTrend();
   if(id==='heatmap')renderHeatmap();
@@ -1755,15 +1974,16 @@ function calcMeterElec(){
     const uEl=document.getElementById('em-fu-'+m.key);
     const bEl=document.getElementById('em-fb-'+m.key);
     if(!isNaN(curr)&&curr>=0){
-      let units=0;
-      if(!isNaN(prev)&&curr>=prev){ units=parseFloat((curr-prev).toFixed(2)); }
-      else if(isNaN(prev)){ units=curr; }
-      if(!isNaN(prev)&&curr<prev){
-        if(uEl) uEl.innerHTML='<span style="color:var(--red)">⚠</span>';
+      if(isNaN(prev)){
+        if(uEl) uEl.innerHTML='<span style="color:var(--blue)" title="ไม่มีเลขมิเตอร์เดือนก่อน — เก็บไว้เป็นฐานให้เดือนถัดไป">ตั้งต้น</span>';
+        if(bEl) bEl.textContent='—';
+      } else if(curr<prev){
+        if(uEl) uEl.innerHTML='<span style="color:var(--red)" title="เลขมิเตอร์น้อยกว่าเดือนก่อน">⚠</span>';
         if(bEl) bEl.textContent='—';
       } else {
+        const units=parseFloat((curr-prev).toFixed(2));
         sum+=units;
-        if(uEl) uEl.textContent=units>0?units.toLocaleString('th'):'—';
+        if(uEl) uEl.textContent=units>0?units.toLocaleString('th'):'0';
         if(bEl) bEl.textContent=units>0?(units*rate).toLocaleString('th',{minimumFractionDigits:0}):'—';
       }
     } else {
@@ -1828,14 +2048,17 @@ function calcWaterTotals(){
       const uEl=document.getElementById('ew-fu-'+m.key);
       const bEl=document.getElementById('ew-fb-'+m.key);
       if(!isNaN(curr)&&curr>=0){
-        if(!isNaN(prev)&&curr>=prev){ units=parseFloat((curr-prev).toFixed(2)); }
-        else if(isNaN(prev)){ units=curr; }
-        if(!isNaN(prev)&&curr<prev){
-          if(uEl) uEl.innerHTML='<span style="color:var(--red)">⚠</span>';
+        if(isNaN(prev)){
+          // ไม่มีเลขมิเตอร์เดือนก่อน = เดือนตั้งต้น ยังคิดหน่วยไม่ได้
+          if(uEl) uEl.innerHTML='<span style="color:var(--blue)" title="ไม่มีเลขมิเตอร์เดือนก่อน — เก็บไว้เป็นฐานให้เดือนถัดไป">ตั้งต้น</span>';
+          if(bEl) bEl.textContent='—';
+        } else if(curr<prev){
+          if(uEl) uEl.innerHTML='<span style="color:var(--red)" title="เลขมิเตอร์น้อยกว่าเดือนก่อน">⚠</span>';
           if(bEl) bEl.textContent='—';
         } else {
+          units=parseFloat((curr-prev).toFixed(2));
           sum+=units;
-          if(uEl) uEl.textContent=units>0?units.toLocaleString():'—';
+          if(uEl) uEl.textContent=units>0?units.toLocaleString():'0';
           if(bEl) bEl.textContent=units>0?(units*rate).toLocaleString('th',{minimumFractionDigits:0}):'—';
         }
       } else {
@@ -1934,14 +2157,14 @@ function fixRate(type){
   if(type==='elec'){
     const r=parseFloat(document.getElementById('e-rate').value);
     if(!r||r<=0){alert('กรุณากรอกราคาต่อหน่วยก่อน');return;}
-    S.settings.fixed_elec_rate=r; sv();
+    S.settings.fixed_elec_rate=r; sv(); pushSettings(true);
     const hint=document.getElementById('e-rate-hint');
     if(hint) hint.innerHTML=`📌 Fixed: <strong>${r} บาท/หน่วย</strong> — จะเติมอัตโนมัติทุกครั้ง`;
     showToast(`📌 Fix ราคาไฟ ${r} บาท/หน่วย แล้ว`);
   } else {
     const r=parseFloat(document.getElementById('ew-rate').value);
     if(!r||r<=0){alert('กรุณากรอกราคาต่อหน่วยก่อน');return;}
-    S.settings.fixed_water_rate=r; sv();
+    S.settings.fixed_water_rate=r; sv(); pushSettings(true);
     const hint=document.getElementById('ew-rate-hint');
     if(hint) hint.innerHTML=`📌 Fixed: <strong>${r} บาท/ลบ.ม.</strong> — จะเติมอัตโนมัติทุกครั้ง`;
     showToast(`📌 Fix ราคาน้ำ ${r} บาท/ลบ.ม. แล้ว`);
@@ -1972,21 +2195,21 @@ async function saveEntry(){
   const msgEl=document.getElementById('e-msg');
   // collect per-meter data
   const elec_meters={};
-  let units=0;
+  let units=0, nRead=0;
   ELEC_METER_CONFIG.forEach(mk=>{
     const curr=parseFloat(document.getElementById('em-f-'+mk.key)?.value);
     const prev=parseFloat(document.getElementById('em-fp-'+mk.key)?.value);
-    if(!isNaN(curr)&&curr>=0){
-      elec_meters[mk.key]=curr;
-      const u=(!isNaN(prev)&&curr>=prev)?parseFloat((curr-prev).toFixed(2)):curr;
-      units+=u;
-    }
+    if(isNaN(curr)||curr<0) return;
+    elec_meters[mk.key]=curr; nRead++;
+    if(isNaN(prev)) return;                       // เดือนตั้งต้น — เก็บเลขไว้ให้เดือนถัดไปหัก
+    units+=curr>=prev?parseFloat((curr-prev).toFixed(2)):0;
   });
+  units=Math.round(units*100)/100;
   const total=parseFloat(document.getElementById('e-total').value);
-  if(!bid||!y||!m||units<=0){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์ปัจจุบัน (หน่วยต้องมากกว่า 0)</div>'; return; }
-  const rateRaw=parseFloat(document.getElementById('e-rate').value);
   const safeTotal = (!isNaN(total) && total>0) ? total : 0;
-  const safeRate = (!isNaN(rateRaw) && rateRaw>0) ? parseFloat(rateRaw.toFixed(4)) : (safeTotal>0?parseFloat((safeTotal/units).toFixed(4)):0);
+  if(!bid||!y||!m||(nRead===0&&safeTotal<=0)){ msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์ปัจจุบันอย่างน้อย 1 ช่อง หรือกรอกค่าไฟเดือนนี้ (บาท)</div>'; return; }
+  const rateRaw=parseFloat(document.getElementById('e-rate').value);
+  const safeRate = (!isNaN(rateRaw) && rateRaw>0) ? parseFloat(rateRaw.toFixed(4)) : ((safeTotal>0&&units>0)?parseFloat((safeTotal/units).toFixed(4)):0);
   const b=getB(bid);
   const rec={id:'r'+Math.random().toString(36).slice(2),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',year:y,month:m,units,total:safeTotal,rate:safeRate,note,elec_meters};
   const idx=S.records.findIndex(r=>r.building_id===bid&&r.year===y&&r.month===m);
@@ -2006,10 +2229,15 @@ async function saveEntry(){
       apiRec['m'+mk.key+'_units']=pu;
     });
     // apiRec.units = total kWh, apiRec.total = total baht (already in rec)
-    await apiCall('saverecord', apiRec);
-    msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกสำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units.toLocaleString()} kWh</strong>${safeTotal>0?' = '+safeTotal.toLocaleString()+' บาท':''}</div>`;
+    const r=await apiSave('saverecord', apiRec);
+    if(r.ok){
+      reconcileId(S.records, rec, r.res);
+      msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกขึ้น Google Sheets แล้ว: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units>0?units.toLocaleString()+' kWh':'เดือนตั้งต้น (เก็บเลขมิเตอร์)'}</strong>${safeTotal>0?' = '+safeTotal.toLocaleString()+' บาท':''}</div>`;
+    } else {
+      msgEl.innerHTML=`<div class="alert alert-err">⚠ <b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งไว้แล้ว (ดูปุ่มส้มมุมซ้ายล่าง กดส่งซ้ำได้)<br><span style="font-size:11px">สาเหตุ: ${r.error}</span></div>`;
+    }
   }catch(err){
-    msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่ส่งขึ้น Sheets ไม่สำเร็จ: ${err.message}</div>`;
+    msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่เกิดข้อผิดพลาด: ${err.message}</div>`;
   }
   btn.disabled=false; btn.innerHTML='✓ บันทึก';
   init(); renderEntryStatus();
@@ -2065,17 +2293,24 @@ async function saveWaterEntry(){
   // collect floor meter readings and compute units from diff
   const floor_meters={};
   const floors={};
-  let units=0;
-  WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(m=>{
-    const curr=parseFloat(document.getElementById('ew-f-'+m.key)?.value);
-    const prev=parseFloat(document.getElementById('ew-fp-'+m.key)?.value);
-    if(!isNaN(curr)&&curr>=0){
-      floor_meters[m.key]=curr;
-      const u=(!isNaN(prev)&&curr>=prev)?parseFloat((curr-prev).toFixed(2)):curr;
-      floors[m.key]=u; units+=u;
-    }
-  });});
-  if(!bid||!y||!m||units<=0){ if(msgEl) msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์อย่างน้อย 1 ชั้น</div>'; return; }
+  let units=0, nRead=0, nDiff=0;
+  WATER_FLOOR_CONFIG.forEach(fc=>{
+    let fu=0,any=false;
+    fc.meters.forEach(m=>{
+      const curr=parseFloat(document.getElementById('ew-f-'+m.key)?.value);
+      const prev=parseFloat(document.getElementById('ew-fp-'+m.key)?.value);
+      if(isNaN(curr)||curr<0) return;
+      floor_meters[m.key]=curr; nRead++;
+      // ไม่มีเลขมิเตอร์เดือนก่อน = เดือนตั้งต้น → ยังคิดหน่วยไม่ได้ (เก็บเลขไว้ให้เดือนถัดไปหัก)
+      if(isNaN(prev)) return;
+      const u=curr>=prev?parseFloat((curr-prev).toFixed(2)):0;
+      floors[m.key]=u; fu+=u; any=true; nDiff++;
+    });
+    if(any) floors[fc.floor]=Math.round(fu*100)/100;   // key รายชั้น — หน้ารายงานอ่านจาก key นี้
+  });
+  WATER_FLOORS.forEach(f=>{ if(floors[f]!=null) units+=floors[f]; });
+  units=Math.round(units*100)/100;
+  if(!bid||!y||!m||nRead===0){ if(msgEl) msgEl.innerHTML='<div class="alert alert-warn">กรุณากรอกเลขมิเตอร์อย่างน้อย 1 ช่อง</div>'; return; }
   const rate=(!isNaN(wrateRaw)&&wrateRaw>0)?parseFloat(wrateRaw.toFixed(4)):24;
   const total=parseFloat((units*rate).toFixed(2));
   const b=getB(bid);
@@ -2096,10 +2331,15 @@ async function saveWaterEntry(){
       wApiRec['wm_'+mk.key+'_units']=floors[mk.key]??null;
     });});
     // wApiRec.units = total m³, wApiRec.total = total baht (already in rec)
-    await apiCall('savewaterrecord', wApiRec);
-    if(msgEl) msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกสำเร็จ: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units.toLocaleString()} ลบ.ม.</strong> = ${total.toLocaleString()} บาท</div>`;
+    const r=await apiSave('savewaterrecord', wApiRec);
+    if(r.ok){
+      reconcileId(S.water_records, rec, r.res);
+      if(msgEl) msgEl.innerHTML=`<div class="alert alert-success">✓ บันทึกขึ้น Google Sheets แล้ว: ${b?.name} ${MFL[m-1]} ${y} — <strong>${units>0?units.toLocaleString()+' ลบ.ม. = '+total.toLocaleString()+' บาท':'เดือนตั้งต้น (เก็บเลขมิเตอร์ '+nRead+' ช่อง)'}</strong></div>`;
+    } else {
+      if(msgEl) msgEl.innerHTML=`<div class="alert alert-err">⚠ <b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งไว้แล้ว (ดูปุ่มส้มมุมซ้ายล่าง กดส่งซ้ำได้)<br><span style="font-size:11px">สาเหตุ: ${r.error}</span></div>`;
+    }
   }catch(err){
-    if(msgEl) msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่ส่งขึ้น Sheets ไม่สำเร็จ: ${err.message}</div>`;
+    if(msgEl) msgEl.innerHTML=`<div class="alert alert-err">⚠ บันทึกในเครื่องแล้ว แต่เกิดข้อผิดพลาด: ${err.message}</div>`;
   }
   if(btn){btn.disabled=false;btn.innerHTML='✓ บันทึก';}
   init();renderWaterEntryStatus();
@@ -2111,6 +2351,323 @@ function clearWaterEntry(){
   const fwr=S.settings.fixed_water_rate||0;
   const r=document.getElementById('ew-rate');if(r)r.value=fwr>0?fwr:24;
   loadExistingWater();
+}
+
+/* ===================== WATER REPORT ===================== */
+const MN_TH=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function renderWaterReport(){
+  const bldSel=document.getElementById('wr-bld');
+  if(!bldSel)return;
+  const act=S.buildings.filter(b=>b.active);
+  bldSel.innerHTML=act.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  const yrSel=document.getElementById('wr-yr');
+  const yrs=getYears(); const selY=parseInt(yrSel.value)||yrs[yrs.length-1];
+  yrSel.innerHTML=yrs.map(y=>`<option value="${y}"${y===selY?' selected':''}>${y}</option>`).join('');
+  const bid=bldSel.value; const y=parseInt(yrSel.value)||selY;
+  const recs=S.water_records.filter(r=>r.building_id===bid&&r.year===y).sort((a,b)=>a.month-b.month);
+  const floors=WATER_FLOORS;
+  const now=new Date(); const curY=now.getFullYear()+543; const curM=now.getMonth()+1;
+  const totF={}; floors.forEach(f=>totF[f]=0);
+  let totU=0,totB=0;
+  let rows='';
+  for(let m=1;m<=12;m++){
+    const rec=recs.find(r=>r.month===m);
+    if(!rec&&(y>curY||(y===curY&&m>curM)))continue;
+    rows+=`<tr style="${rec?'':'background:#fffbe6'}">
+      <td style="padding:7px 10px;border-bottom:1px solid var(--border);font-weight:600;text-align:center;white-space:nowrap">${MN_TH[m-1]}</td>`;
+    floors.forEach(f=>{
+      const v=rec?.floors?.[f];
+      const n=v!=null&&v!==''?Number(v):null;
+      if(n!=null)totF[f]+=n;
+      rows+=`<td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;color:${n>0?'var(--teal-d)':'var(--text3)'}">${n!=null?n.toLocaleString():'—'}</td>`;
+    });
+    const u=rec?.units; const rate=rec?.rate; const tot=rec?.total;
+    if(u!=null)totU+=Number(u);
+    if(tot!=null)totB+=Number(tot);
+    rows+=`<td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-weight:700">${u!=null?Number(u).toLocaleString():'—'}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)">${rate!=null?rate:'—'}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--teal-d)">${tot!=null?Number(tot).toLocaleString('th-TH',{minimumFractionDigits:2}):'—'}</td></tr>`;
+  }
+  rows+=`<tr style="background:var(--surface2);font-weight:700"><td style="padding:8px 10px;border-top:2px solid var(--border)">รวม</td>`;
+  floors.forEach(f=>{rows+=`<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;color:var(--teal-d)">${totF[f]?totF[f].toLocaleString():'—'}</td>`;});
+  rows+=`<td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;font-size:14px">${totU.toLocaleString()}</td>
+    <td></td><td style="padding:8px 10px;border-top:2px solid var(--border);text-align:right;font-size:14px;color:var(--teal-d)">${totB.toLocaleString('th-TH',{minimumFractionDigits:2})}</td></tr>`;
+  const th=`<thead><tr style="background:var(--surface2)">
+    <th style="padding:8px 10px;border-bottom:2px solid var(--border);text-align:center;color:var(--text2)">เดือน</th>
+    ${floors.map(f=>`<th style="padding:8px 10px;border-bottom:2px solid var(--border);text-align:right;color:var(--teal-d);white-space:nowrap">ชั้น ${f}</th>`).join('')}
+    <th style="padding:8px 10px;border-bottom:2px solid var(--border);text-align:right;color:var(--text2)">รวม ลบ.ม.</th>
+    <th style="padding:8px 10px;border-bottom:2px solid var(--border);text-align:right;color:var(--text2)">อัตรา</th>
+    <th style="padding:8px 10px;border-bottom:2px solid var(--border);text-align:right;color:var(--text1)">ยอด (บาท)</th>
+  </tr></thead>`;
+  document.getElementById('wr-table').innerHTML=th+`<tbody>${rows}</tbody>`;
+  document.getElementById('wr-msg').textContent=`แสดงข้อมูลปี ${y} | ${recs.length} เดือนที่มีบันทึก`;
+}
+
+function openWaterReportImport(){
+  const bldSel=document.getElementById('wri-bld');
+  const act=S.buildings.filter(b=>b.active);
+  bldSel.innerHTML=act.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  // pre-select same building as report
+  const curBld=document.getElementById('wr-bld')?.value;
+  if(curBld)bldSel.value=curBld;
+  document.getElementById('wri-csv').value='';
+  document.getElementById('wri-rate').value=S.settings.fixed_water_rate||24;
+  document.getElementById('wri-preview').innerHTML='';
+  document.getElementById('wri-msg').innerHTML='';
+  document.getElementById('wri-run-btn').disabled=true;
+  document.getElementById('mo-water-import').style.display='flex';
+}
+function closeWaterReportImport(){
+  document.getElementById('mo-water-import').style.display='none';
+}
+let wriParsed=[];      // รูปแบบ ② CSV หน่วยที่ใช้
+let wriMeterRows=[];   // รูปแบบ ① เลขมิเตอร์
+let wriMode='csv';
+
+/* ---------- รูปแบบ ① : เลขมิเตอร์แบบข้อความ ---------- */
+const WRI_MO_FULL={'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'กรกฏาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+const WRI_MO_ABBR={'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
+const WRI_PAIR_RE=/\((\d{1,4})\)\s*[:=]?\s*(\d[\d,]*(?:\.\d+)?)/g;
+
+// ช่องมิเตอร์ทั้งหมด เรียงตาม WATER_FLOOR_CONFIG
+function waterMeterSlots(){
+  const slots=[];
+  WATER_FLOOR_CONFIG.forEach(fc=>fc.meters.forEach(m=>slots.push({key:m.key,no:m.no,floor:fc.floor})));
+  return slots;
+}
+function wriSlotByKey(key){ return waterMeterSlots().find(s=>s.key===key); }
+
+function wriParseMonthHeader(line){
+  let month=null;
+  for(const n in WRI_MO_FULL){ if(line.indexOf(n)>=0){ month=WRI_MO_FULL[n]; break; } }
+  if(!month){ for(const n in WRI_MO_ABBR){ if(line.indexOf(n)>=0){ month=WRI_MO_ABBR[n]; break; } } }
+  if(!month) return null;
+  const y4=line.match(/(25\d{2})/);
+  if(y4) return {month,year:parseInt(y4[1])};
+  const y2=line.match(/(?:^|[^\d])(\d{2})(?:[^\d]|$)/);
+  if(y2) return {month,year:2500+parseInt(y2[1])};
+  return null;
+}
+
+// จับคู่ "(เลขมิเตอร์) ค่า" → ช่องมิเตอร์ (ตรงเลขก่อน ถ้าไม่ตรงใช้ตำแหน่งถัดไป)
+function wriAssignSlots(pairs){
+  const slots=waterMeterSlots();
+  const used=new Array(slots.length).fill(false);
+  const meters={}, mapped=[], unmatched=[];
+  let cursor=0;
+  pairs.forEach(p=>{
+    const want='('+p.no+')';
+    let idx=-1;
+    for(let i=cursor;i<slots.length;i++){ if(!used[i]&&slots[i].no===want){ idx=i; break; } }
+    if(idx<0){ for(let i=cursor;i<slots.length;i++){ if(!used[i]){ idx=i; break; } } }
+    if(idx<0){ unmatched.push(p); return; }
+    used[idx]=true; cursor=idx+1;
+    meters[slots[idx].key]=p.val;
+    mapped.push({no:p.no,val:p.val,slot:slots[idx]});
+  });
+  return {meters,mapped,unmatched};
+}
+
+function parseWaterMeterText(raw){
+  const blocks=[]; let cur=null;
+  const flush=()=>{ if(cur&&cur.pairs.length) blocks.push(cur); cur=null; };
+  raw.split('\n').forEach(line=>{
+    const t=line.trim(); if(!t) return;
+    const hdr=wriParseMonthHeader(t);
+    if(hdr){ flush(); cur={year:hdr.year,month:hdr.month,pairs:[]}; }
+    const pairs=[]; let m; WRI_PAIR_RE.lastIndex=0;
+    while((m=WRI_PAIR_RE.exec(t))!==null){
+      const v=parseFloat(m[2].replace(/,/g,''));
+      if(!isNaN(v)) pairs.push({no:m[1],val:v});
+    }
+    if(pairs.length&&cur) cur.pairs.push(...pairs);
+  });
+  flush();
+  // จับคู่ช่อง + รวมเดือนซ้ำ (เอารายการหลังสุด) + เรียงตามเวลา
+  const byKey={};
+  blocks.forEach(blk=>{
+    const a=wriAssignSlots(blk.pairs);
+    byKey[blk.year*100+blk.month]={year:blk.year,month:blk.month,meters:a.meters,mapped:a.mapped,unmatched:a.unmatched};
+  });
+  return Object.keys(byKey).sort((a,b)=>a-b).map(k=>byKey[k]);
+}
+
+// คำนวณหน่วยที่ใช้จากผลต่างเลขมิเตอร์ (เดือนก่อนหน้าในชุดนี้ หรือจากข้อมูลที่บันทึกไว้)
+function wriBuildMeterRows(blocks,bid,rate){
+  const rows=[];
+  blocks.forEach((blk,i)=>{
+    let py=blk.year,pm=blk.month-1; if(pm<1){pm=12;py--;}
+    let prevMeters=null,prevSrc='';
+    const pb=blocks[i-1];
+    if(pb&&pb.year===py&&pb.month===pm){ prevMeters=pb.meters; prevSrc='ผลต่างจากเดือนก่อนในชุดนี้'; }
+    else{
+      const pr=S.water_records.find(r=>r.building_id===bid&&r.year===py&&r.month===pm);
+      if(pr&&pr.floor_meters&&Object.keys(pr.floor_meters).length){ prevMeters=pr.floor_meters; prevSrc='ผลต่างจากข้อมูลที่บันทึกไว้'; }
+    }
+    const floors={},perMeter={},warn=[]; let units=0;
+    WATER_FLOOR_CONFIG.forEach(fc=>{
+      let fu=0,any=false;
+      fc.meters.forEach(mk=>{
+        const cur=blk.meters[mk.key]; if(cur==null) return;
+        const pv=prevMeters?prevMeters[mk.key]:null; if(pv==null) return;
+        let u=cur-pv;
+        if(u<0){ warn.push(`${mk.no} ชั้น${fc.floor}: เลขน้อยกว่าเดือนก่อน`); u=0; }
+        u=Math.round(u*100)/100; perMeter[mk.key]=u; fu+=u; any=true;
+      });
+      if(any){ floors[fc.floor]=Math.round(fu*100)/100; units+=floors[fc.floor]; }
+    });
+    units=Math.round(units*100)/100;
+    rows.push({year:blk.year,month:blk.month,meters:blk.meters,mapped:blk.mapped,unmatched:blk.unmatched,
+      prevMeters,prevSrc,floors,perMeter,units,rate,total:Math.round(units*rate*100)/100,baseline:!prevMeters,warn});
+  });
+  return rows;
+}
+
+function previewWaterMeterImport(raw,prev,runBtn){
+  const bid=document.getElementById('wri-bld').value;
+  const rate=parseFloat(document.getElementById('wri-rate').value)||S.settings.fixed_water_rate||24;
+  const blocks=parseWaterMeterText(raw);
+  wriMeterRows=[];
+  if(!blocks.length){
+    prev.innerHTML='<div class="alert alert-warn">ไม่พบข้อมูล — ต้องมีบรรทัดชื่อเดือน (เช่น <b>ธันวาคม 2567</b>) แล้วตามด้วยบรรทัดเลขมิเตอร์ <b>(26) 0012334 | (27) 000208 | ...</b></div>';
+    runBtn.disabled=true; return;
+  }
+  wriMeterRows=wriBuildMeterRows(blocks,bid,rate);
+  const floors=WATER_FLOORS;
+  let html=`<div style="font-size:12px;font-weight:700;color:var(--teal-d);margin-bottom:6px">🔍 ตรวจพบรูปแบบ “เลขมิเตอร์” — ${wriMeterRows.length} เดือน (คำนวณหน่วยจากผลต่างให้อัตโนมัติ)</div>`;
+  html+=`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--surface2)">
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border);white-space:nowrap">เดือน</th>
+    ${floors.map(f=>`<th style="padding:5px 6px;border-bottom:2px solid var(--border);color:var(--teal-d)">ชั้น${f}</th>`).join('')}
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border)">รวม</th>
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border)">ยอด (บาท)</th>
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border)">สถานะ</th>
+  </tr></thead><tbody>`;
+  wriMeterRows.forEach(row=>{
+    const ex=S.water_records.find(r=>r.building_id===bid&&r.year===row.year&&r.month===row.month);
+    let status=row.baseline
+      ? '<span class="badge badge-blue" title="ไม่มีเลขมิเตอร์เดือนก่อน — เก็บไว้เป็นฐานให้เดือนถัดไป">ตั้งต้น</span>'
+      : (ex?'<span class="badge badge-amber">อัปเดต</span>':'<span class="badge badge-green">ใหม่</span>');
+    if(row.warn.length) status+=` <span class="badge badge-red" title="${row.warn.join(' / ')}">⚠</span>`;
+    if(row.unmatched.length) status+=` <span class="badge badge-gray" title="จับคู่ช่องมิเตอร์ไม่ได้ ${row.unmatched.length} ตัว">?</span>`;
+    html+=`<tr><td style="padding:4px 6px;border-bottom:1px solid var(--border);white-space:nowrap">${MN_TH[row.month-1]} ${row.year}</td>`;
+    floors.forEach(f=>{html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right">${row.floors[f]!=null?row.floors[f].toLocaleString():'—'}</td>`;});
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right;font-weight:700">${row.units?row.units.toLocaleString():'—'}</td>`;
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right;color:var(--teal-d)">${row.units?row.total.toLocaleString('th-TH',{minimumFractionDigits:2}):'—'}</td>`;
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);white-space:nowrap">${status}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  // รายละเอียดเลขมิเตอร์ที่อ่านได้
+  html+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--text2)">ดูเลขมิเตอร์ที่อ่านได้ (ตรวจความถูกต้อง)</summary><div style="font-size:11px;margin-top:6px;line-height:1.9">`;
+  wriMeterRows.forEach(row=>{
+    html+=`<div style="padding:5px 0;border-bottom:1px dashed var(--border)"><b>${MFL[row.month-1]} ${row.year}</b> <span style="color:var(--text3)">${row.prevSrc||'— ไม่มีเดือนก่อนหน้า'}</span><br>`;
+    html+=row.mapped.map(mp=>`<span style="display:inline-block;margin-right:10px">ชั้น${mp.slot.floor} <code>${mp.slot.no}</code> ${mp.val.toLocaleString()}${mp.slot.no!=='('+mp.no+')'?`<span style="color:var(--amber-d)" title="ในข้อความเขียนว่า (${mp.no})"> ←(${mp.no})</span>`:''}</span>`).join('');
+    if(row.unmatched.length) html+=`<br><span style="color:var(--red)">จับคู่ไม่ได้: ${row.unmatched.map(u=>`(${u.no}) ${u.val}`).join(', ')}</span>`;
+    if(row.warn.length) html+=`<br><span style="color:var(--red)">⚠ ${row.warn.join(' · ')}</span>`;
+    html+='</div>';
+  });
+  html+='</div></details>';
+  prev.innerHTML=html;
+  runBtn.disabled=false;
+}
+
+function previewWaterImport(){
+  const raw=document.getElementById('wri-csv').value.trim();
+  const prev=document.getElementById('wri-preview');
+  const runBtn=document.getElementById('wri-run-btn');
+  wriParsed=[]; wriMeterRows=[];
+  if(!raw){prev.innerHTML='';runBtn.disabled=true;return;}
+  // ตรวจจับรูปแบบ: มี "(เลข) ค่า" = รูปแบบเลขมิเตอร์
+  if(/\(\d{1,4}\)\s*[:=]?\s*\d/.test(raw)){ wriMode='meter'; return previewWaterMeterImport(raw,prev,runBtn); }
+  wriMode='csv';
+  const csv=raw;
+  const lines=csv.split('\n').map(l=>l.trim()).filter(l=>l);
+  const isHeader=l=>/^(ปี|year|เดือน|month|b|ชั้น)/i.test(l.split(',')[0]);
+  const dataLines=lines.filter(l=>!isHeader(l));
+  const floors=['B','1','2','3','4','5','6','7'];
+  const fwr=S.settings.fixed_water_rate||24;
+  const errors=[];
+  dataLines.forEach((line,i)=>{
+    const parts=line.split(',').map(s=>s.trim());
+    const y=parseInt(parts[0]); const m=parseInt(parts[1]);
+    if(!y||!m||m<1||m>12){errors.push(`แถว ${i+2}: ปีหรือเดือนไม่ถูกต้อง`);return;}
+    const fl={}; floors.forEach((f,fi)=>{const v=parseFloat(parts[2+fi]);if(!isNaN(v))fl[f]=v;});
+    const rate=parseFloat(parts[10])||fwr;
+    const units=Object.values(fl).reduce((s,v)=>s+v,0);
+    const total=units*rate;
+    wriParsed.push({year:y,month:m,floors:fl,rate,units,total});
+  });
+  if(errors.length){prev.innerHTML=`<div class="alert alert-warn">${errors.join('<br>')}</div>`;runBtn.disabled=true;return;}
+  if(!wriParsed.length){prev.innerHTML='<div style="color:var(--text3);font-size:12px">ไม่พบข้อมูล</div>';runBtn.disabled=true;return;}
+  // preview table
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--surface2)">
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border)">ปี</th><th style="padding:5px 6px;border-bottom:2px solid var(--border)">เดือน</th>
+    ${floors.map(f=>`<th style="padding:5px 6px;border-bottom:2px solid var(--border);color:var(--teal-d)">ชั้น${f}</th>`).join('')}
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border)">รวม</th><th style="padding:5px 6px;border-bottom:2px solid var(--border)">อัตรา</th><th style="padding:5px 6px;border-bottom:2px solid var(--border)">ยอด</th>
+    <th style="padding:5px 6px;border-bottom:2px solid var(--border)">สถานะ</th>
+  </tr></thead><tbody>`;
+  const bid=document.getElementById('wri-bld').value;
+  wriParsed.forEach(row=>{
+    const ex=S.water_records.find(r=>r.building_id===bid&&r.year===row.year&&r.month===row.month);
+    const status=ex?'<span class="badge badge-amber">อัปเดต</span>':'<span class="badge badge-green">ใหม่</span>';
+    html+=`<tr><td style="padding:4px 6px;border-bottom:1px solid var(--border)">${row.year}</td><td style="padding:4px 6px;border-bottom:1px solid var(--border)">${MN_TH[row.month-1]}</td>`;
+    floors.forEach(f=>{html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right">${row.floors[f]??'—'}</td>`;});
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right;font-weight:700">${row.units.toLocaleString()}</td>`;
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right">${row.rate}</td>`;
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border);text-align:right;color:var(--teal-d)">${row.total.toLocaleString('th-TH',{minimumFractionDigits:2})}</td>`;
+    html+=`<td style="padding:4px 6px;border-bottom:1px solid var(--border)">${status}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  prev.innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--teal-d);margin-bottom:6px">🔍 ตรวจพบรูปแบบ “CSV หน่วยที่ใช้” — ${wriParsed.length} เดือน</div>`+html;
+  runBtn.disabled=false;
+}
+async function runWaterImport(){
+  const bid=document.getElementById('wri-bld').value;
+  const b=S.buildings.find(x=>x.id===bid);
+  const msg=document.getElementById('wri-msg');
+  const runBtn=document.getElementById('wri-run-btn');
+  // แปลงทั้ง 2 รูปแบบให้อยู่ในโครงเดียวกันก่อนบันทึก
+  const jobs=(wriMode==='meter')
+    ? wriMeterRows.map(r=>({year:r.year,month:r.month,units:r.units,total:r.total,rate:r.rate,
+        floors:Object.assign({},r.floors,r.perMeter), floor_meters:r.meters, prevMeters:r.prevMeters||{},
+        note:r.baseline?'นำเข้าเลขมิเตอร์ (ตั้งต้น)':'นำเข้าเลขมิเตอร์'}))
+    : wriParsed.map(r=>({year:r.year,month:r.month,units:r.units,total:r.total,rate:r.rate,
+        floors:r.floors, floor_meters:{}, prevMeters:{}, note:'นำเข้า CSV'}));
+  if(!jobs.length){ msg.innerHTML='<span style="color:var(--red)">ไม่มีข้อมูลให้นำเข้า</span>'; return; }
+  runBtn.disabled=true; msg.innerHTML=`<span style="color:var(--teal-d)"><span class="spinner"></span> กำลังนำเข้า ${jobs.length} เดือน...</span>`;
+  let ok=0,fail=0,lastErr='';
+  for(const row of jobs){
+    const existIdx=S.water_records.findIndex(r=>r.building_id===bid&&r.year===row.year&&r.month===row.month);
+    const existId=existIdx>=0?S.water_records[existIdx].id:null;
+    const rec={id:existId||('w'+Math.random().toString(36).slice(2)),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',
+      year:row.year,month:row.month,units:row.units,total:row.total,rate:row.rate,note:row.note,
+      floors:row.floors,floor_meters:row.floor_meters,meter_prev:null,meter_curr:null};
+    if(existIdx>=0){S.water_records[existIdx]=rec;}else{S.water_records.push(rec);}
+    sv();
+    // send to sheets
+    const wApiRec={id:rec.id,building_id:bid,building_name:rec.building_name,building_code:rec.building_code,
+      year:row.year,month:row.month,units:row.units,total:row.total,rate:row.rate,note:row.note,
+      floor_meters:row.floor_meters,floors:row.floors};
+    WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(mk=>{
+      if(wriMode==='meter'){
+        wApiRec['wm_'+mk.key+'_prev']=row.prevMeters[mk.key]??null;
+        wApiRec['wm_'+mk.key+'_curr']=row.floor_meters[mk.key]??null;
+        wApiRec['wm_'+mk.key+'_units']=row.floors[mk.key]??null;
+      } else {
+        wApiRec['wm_'+mk.key+'_prev']=null;
+        wApiRec['wm_'+mk.key+'_curr']=null;
+        wApiRec['wm_'+mk.key+'_units']=row.floors[fc.floor]??null;
+      }
+    });});
+    const r=await apiSave('savewaterrecord',wApiRec);
+    if(r.ok){ reconcileId(S.water_records,rec,r.res); ok++; }
+    else{ fail++; console.warn('water import row failed',r.error); lastErr=r.error; }
+  }
+  msg.innerHTML = ok
+    ? `<span style="color:var(--green-d)">✓ ขึ้น Google Sheets แล้ว ${ok} เดือน${fail?` · <span style="color:var(--amber-d)">ค้างส่ง ${fail} เดือน (กดปุ่มส้มมุมซ้ายล่างส่งซ้ำ)</span>`:''}</span>`
+    : `<span style="color:var(--red)">⚠ ยังไม่ขึ้น Sheet เลย ${fail} เดือน — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11px">สาเหตุ: ${lastErr||'ไม่ทราบ'}</span></span>`;
+  runBtn.disabled=false;
+  renderPendingBadge();
+  renderWaterReport();
 }
 
 /* ===================== COMPARE / TREND / HEATMAP / TABLE ===================== */
@@ -2578,10 +3135,12 @@ async function runImportElec4(){
   const bld=getB(bid);
   if(!bld)return;
   const rate=parseFloat(document.getElementById('imp4-rate').value)||5;
-  let ins=0,upd=0;
-  parsed.forEach(d=>{
+  const btn=document.getElementById('imp4-go-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> กำลังส่งขึ้น Sheet...';
+  let ins=0,upd=0,sent=0,queued=0,lastErr='';
+  for(const d of parsed){
     const mu=d.meterUnits;
-    const elec_meters={'1':null,'2':null,'3':null,'4':null};
+    const elec_meters={};
     [1,2,3,4].forEach(i=>{ if(mu[i]!=null) elec_meters[String(i)]=mu[i]; });
     const total=parseFloat((d.units*rate).toFixed(2));
     const rec={
@@ -2592,11 +3151,19 @@ async function runImportElec4(){
     };
     const i=S.records.findIndex(r=>r.building_id===bid&&r.year===d.year&&r.month===d.month);
     if(i>=0){rec.id=S.records[i].id;S.records[i]=rec;upd++;}else{S.records.push(rec);ins++;}
-  });
-  sv();
+    sv();
+    // ข้อมูลที่วางมาเป็น "หน่วยที่ใช้" รายมิเตอร์ (ไม่ใช่เลขมิเตอร์) → ลง m*_units
+    const apiRec={...rec};
+    [1,2,3,4].forEach(k=>{ apiRec['m'+k+'_prev']=null; apiRec['m'+k+'_curr']=null; apiRec['m'+k+'_units']=mu[k]??null; });
+    const r=await apiSave('saverecord',apiRec);
+    if(r.ok){ reconcileId(S.records,rec,r.res); sent++; } else { queued++; lastErr=r.error; }
+  }
+  btn.disabled=false; btn.innerHTML='📥 นำเข้า';
   cm('mo-import-elec4');
-  renderTable(); renderEntryStatus(); renderDash();
-  alert(`✅ นำเข้าสำเร็จ!\nใหม่: ${ins} เดือน | อัปเดต: ${upd} เดือน\nรวม ${ins+upd} รายการ`);
+  renderPendingBadge(); renderTable(); renderEntryStatus(); renderDash();
+  alert(`นำเข้า ${ins+upd} เดือน (ใหม่ ${ins} / อัปเดต ${upd})\n\n`
+    + (queued? `⚠ ขึ้น Sheet แล้ว ${sent} เดือน · ค้างส่ง ${queued} เดือน\nสาเหตุ: ${lastErr}\nกดปุ่มส้มมุมซ้ายล่างเพื่อส่งซ้ำ`
+             : `✅ ขึ้น Google Sheets แล้วทั้งหมด ${sent} เดือน`));
 }
 
 /* ===================== IMPORT ===================== */
@@ -2668,10 +3235,12 @@ async function runImport(){
   const bid=document.getElementById('imp-bld').value;
   const bld=getB(bid);
   if(!bld)return;
-  let ins=0,upd=0;
+  let ins=0,upd=0,sent=0,queued=0,lastErr='';
   const arr=isW?S.water_records:S.records;
   const prefix=isW?'w_imp_':'r_imp_';
-  parsed.forEach(d=>{
+  const btn=document.getElementById('imp-go-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> กำลังส่งขึ้น Sheet...';
+  for(const d of parsed){
     const rec={
       id:prefix+bid+'_'+d.year+'_'+d.month,
       building_id:bid,building_name:bld.name,building_code:bld.code,
@@ -2680,12 +3249,17 @@ async function runImport(){
       ...(isW?{floor_meters:{},floors:{}}:{elec_meters:{}})
     };
     const i=arr.findIndex(r=>r.building_id===bid&&r.year===d.year&&r.month===d.month);
-    if(i>=0){arr[i]=rec;upd++;}else{arr.push(rec);ins++;}
-  });
-  sv();
+    if(i>=0){rec.id=arr[i].id;arr[i]=rec;upd++;}else{arr.push(rec);ins++;}
+    sv();
+    const r=await apiSave(isW?'savewaterrecord':'saverecord',rec);
+    if(r.ok){ reconcileId(arr,rec,r.res); sent++; } else { queued++; lastErr=r.error; }
+  }
+  btn.disabled=false; btn.innerHTML='📥 นำเข้า';
   cm('mo-import');
-  renderTable();
-  alert(`✅ นำเข้าสำเร็จ!\nใหม่: ${ins} รายการ | อัปเดต: ${upd} รายการ`);
+  renderPendingBadge(); renderTable(); renderDash();
+  alert(`นำเข้า ${ins+upd} รายการ (ใหม่ ${ins} / อัปเดต ${upd})\n\n`
+    + (queued? `⚠ ขึ้น Sheet แล้ว ${sent} · ค้างส่ง ${queued}\nสาเหตุ: ${lastErr}\nกดปุ่มส้มมุมซ้ายล่างเพื่อส่งซ้ำ`
+             : `✅ ขึ้น Google Sheets แล้วทั้งหมด ${sent} รายการ`));
 }
 
 function editRec(id,isWater=false){
@@ -2732,7 +3306,7 @@ async function delRec(id,isWater=false){
   if(isWater){S.water_records=S.water_records.filter(r=>r.id!==id);}else{S.records=S.records.filter(r=>r.id!==id);}
   sv(); renderTable();
   const action=isWater?'deletewaterrecord':'deleterecord';
-  try{ await fetch(API_URL+'?action='+action+'&id='+encodeURIComponent(id)); }catch(e){ console.warn('delete sync failed',e); }
+  try{ await apiDelete(action,id); }catch(e){ queuePending(action,undefined,id); renderPendingBadge(); showToast('ลบในเครื่องแล้ว — ลบใน Sheet ค้างคิวไว้'); }
 }
 
 /* ===================== BUILDINGS ===================== */
@@ -2765,18 +3339,18 @@ async function addBld(){
   const b={id:'b'+Date.now(),name,code,active:true,color:S.buildings.length%8,subs:[]};
   S.buildings.push(b); sv(); cm('mo-bld'); renderBuildings();
   document.getElementById('nb-name').value='';document.getElementById('nb-code').value='';
-  try{ await apiCall('savebuilding', {id:b.id,name:b.name,code:b.code,active:b.active,color:b.color}); }catch(e){ console.warn('sync failed',e); }
+  await apiSave('savebuilding', {id:b.id,name:b.name,code:b.code,active:b.active,color:b.color});
 }
 async function toggleBld(id){
   if(!requireAdmin())return;
   const b=getB(id); if(b)b.active=!b.active; sv(); renderBuildings();
-  try{ await apiCall('savebuilding', {id:b.id,name:b.name,code:b.code,active:b.active,color:b.color}); }catch(e){}
+  await apiSave('savebuilding', {id:b.id,name:b.name,code:b.code,active:b.active,color:b.color});
 }
 async function delBld(id){
   if(!requireAdmin())return;
   if(!confirm('ลบอาคาร?'))return;
   S.buildings=S.buildings.filter(b=>b.id!==id); sv(); renderBuildings();
-  try{ await fetch(API_URL+'?action=deletebuilding&id='+encodeURIComponent(id)); }catch(e){}
+  try{ await apiDelete('deletebuilding',id); }catch(e){ queuePending('deletebuilding',undefined,id); renderPendingBadge(); }
 }
 function openSubMgr(bid){ if(!requireAdmin())return; S.currentSubBid=bid; renderSubList(getB(bid)); document.getElementById('mo-sub').classList.add('open'); }
 function renderSubList(b){
@@ -2792,14 +3366,14 @@ async function addSub(){
   const sub={id:'s'+Date.now(),name,code};
   b.subs.push(sub); sv(); renderSubList(b); renderBuildings();
   document.getElementById('sub-name').value='';document.getElementById('sub-code').value='';
-  try{ await apiCall('savesubmeter', {id:sub.id,building_id:bid,name:sub.name,code:sub.code}); }catch(e){}
+  await apiSave('savesubmeter', {id:sub.id,building_id:bid,name:sub.name,code:sub.code});
 }
 async function delSub(sid){
   if(!requireAdmin())return;
   const bid=S.currentSubBid,b=getB(bid); if(!b||!b.subs)return;
   if(!confirm('ลบมิเตอร์ย่อยนี้?'))return;
   b.subs=b.subs.filter(s=>s.id!==sid); sv(); renderSubList(b); renderBuildings();
-  try{ await fetch(API_URL+'?action=deletesubmeter&id='+encodeURIComponent(sid)); }catch(e){}
+  try{ await apiDelete('deletesubmeter',sid); }catch(e){ queuePending('deletesubmeter',undefined,sid); renderPendingBadge(); }
 }
 
 /* ===================== NOTIFY ===================== */
@@ -2843,7 +3417,7 @@ async function doAck(email,name,year,month,date,btn){
   if(S.ack_log.find(a=>a.email===email&&a.year===year&&a.month===month))return;
   S.ack_log.push({email,name,year,month,date}); sv();
   renderNotify();
-  try{ await apiCall('saveack', {email,name,year,month,date}); }catch(e){ console.warn('ack sync failed',e); }
+  await apiSave('saveack', {email,name,year,month,date});
 }
 
 /* ===================== SETTINGS ===================== */
@@ -2855,14 +3429,25 @@ function renderSettings(){
   const years=getYears();
   document.getElementById('s-yr').innerHTML=years.map(y=>`<option value="${y}"${y===S.settings.base_year?' selected':''}>${y}</option>`).join('');
 }
-function saveSettings(){
+// ส่งค่าตั้งค่าทั้งก้อนขึ้น Sheet (ชีต Settings แบบ key/value)
+async function pushSettings(silent){
+  const keys=['org','base_year','budget','water_budget','fixed_elec_rate','fixed_water_rate',
+    'shop_t1max','shop_t2max','shop_r1','shop_r2','shop_r3','shop_water_rate'];
+  const payload={}; keys.forEach(k=>{ if(S.settings[k]!==undefined) payload[k]=S.settings[k]; });
+  const r=await apiSave('savesettings',payload);
+  if(!r.ok&&!silent) showToast('⚠ ตั้งค่ายังไม่ขึ้น Sheet — เข้าคิวค้างส่งไว้แล้ว');
+  return r;
+}
+async function saveSettings(){
   if(!requireAdmin())return;
   S.settings.org=document.getElementById('s-org').value;
   S.settings.base_year=parseInt(document.getElementById('s-yr').value)||S.settings.base_year;
   S.settings.budget=parseFloat(document.getElementById('s-budget').value)||0;
   const swb2=document.getElementById('s-wbudget');if(swb2)S.settings.water_budget=parseFloat(swb2.value)||0;
   document.getElementById('org-name-side').textContent=S.settings.org;
-  sv(); alert('บันทึกการตั้งค่าแล้ว ✓');
+  sv();
+  const r=await pushSettings(true);
+  alert(r.ok?'บันทึกการตั้งค่าขึ้น Google Sheets แล้ว ✓':'บันทึกในเครื่องแล้ว — ส่งขึ้น Sheet ไม่สำเร็จ (เข้าคิวค้างส่ง)\n'+r.error);
 }
 function saveApiUrl(){
   if(!requireAdmin())return;
@@ -2875,11 +3460,49 @@ function saveApiUrl(){
 async function testConnection(){
   const el=document.getElementById('conn-test-result');
   el.innerHTML='<span class="spinner"></span> กำลังทดสอบ...';
+  const need=['saverecord','savewaterrecord','savebuilding','savesubmeter','saveack','saveshop','saveshoprecord','savesettings',
+    'deleterecord','deletewaterrecord','deleteshop','deleteshoprecord'];
   try{
     const data=await apiCall('getall');
-    el.innerHTML=`<div class="alert alert-success">✓ เชื่อมต่อสำเร็จ — พบ ${(data.records||[]).length} รายการ, ${(data.buildings||[]).length} อาคาร</div>`;
+    let dg=null;
+    try{ dg=await apiCall('diag'); }catch(e){}
+    const rows=[
+      ['ค่าไฟ (records)', (data.records||[]).length, 'records' in data],
+      ['ค่าน้ำ (water_records)', (data.water_records||[]).length, 'water_records' in data],
+      ['อาคาร (buildings)', (data.buildings||[]).length, 'buildings' in data],
+      ['มิเตอร์ย่อย (subMeters)', (data.subMeters||[]).length, 'subMeters' in data],
+      ['การรับทราบ (acks)', (data.acks||[]).length, 'acks' in data],
+      ['ร้านเช่า (shops)', (data.shops||[]).length, 'shops' in data],
+      ['บิลร้านเช่า (shop_records)', (data.shop_records||[]).length, 'shop_records' in data],
+      ['ตั้งค่า (settings)', data.settings?Object.keys(data.settings).length:0, 'settings' in data]
+    ];
+    const missing=[];
+    if(dg&&dg.actions){ need.forEach(a=>{ if(dg.actions.indexOf(a)<0) missing.push(a); }); }
+    else {
+      // backend เก่าไม่มี diag → ตรวจทีละ action ด้วยการยิงแบบไม่มี data (ไม่เขียนข้อมูล)
+      for(const a of need){
+        try{ await apiCall(a); }
+        catch(e){ if(/Unknown action/i.test(e.message)) missing.push(a); }
+      }
+    }
+    const ready = missing.length===0 && ('water_records' in data);
+    el.innerHTML=`
+      <div class="alert ${ready?'alert-success':'alert-err'}" style="align-items:flex-start">
+        <span class="alert-icon">${ready?'✓':'⚠️'}</span>
+        <div style="flex:1">
+          <b>${ready?'พร้อมใช้งานจริง — บันทึกขึ้น Sheet ได้ทุกอย่าง':'ยังใช้งานจริงไม่ได้'}</b>
+          <div style="font-size:11px;margin-top:2px">Backend version: <code>${(dg&&dg.version)||data.version||'(เก่า — ยังไม่ได้ paste Code.gs ใหม่)'}</code></div>
+          ${missing.length?`<div style="font-size:12px;margin-top:8px"><b>action ที่ Apps Script ยังไม่มี (${missing.length}):</b><br><code>${missing.join(', ')}</code>
+            <br>→ paste ไฟล์ <b>Code.gs</b> ตัวใหม่ลงใน Apps Script แล้ว Deploy เป็น New version</div>`:''}
+        </div>
+      </div>
+      <table class="tbl" style="font-size:12px;margin-top:6px"><thead><tr><th>ชีต</th><th style="text-align:right">จำนวน</th><th style="text-align:center">สถานะ</th></tr></thead><tbody>
+      ${rows.map(([n,c,has])=>`<tr><td>${n}</td><td style="text-align:right;font-weight:600">${has?c:'—'}</td>
+        <td style="text-align:center">${has?'<span class="badge badge-green">ใช้ได้</span>':'<span class="badge badge-red">ไม่มี</span>'}</td></tr>`).join('')}
+      </tbody></table>
+      ${dg&&dg.mapped?`<div style="font-size:11px;color:var(--text3);margin-top:6px">ชีตที่ map ได้: ${dg.mapped.filter(m=>m.sheet).map(m=>`${m.sheet} (${m.rows} แถว)`).join(' · ')}</div>`:''}`;
   }catch(err){
-    el.innerHTML=`<div class="alert alert-err">✗ เชื่อมต่อไม่สำเร็จ: ${err.message}</div>`;
+    el.innerHTML=`<div class="alert alert-err">✗ เชื่อมต่อไม่สำเร็จ: ${err.message}<br><span style="font-size:11px">ตรวจ URL และ Deploy ว่าตั้ง "Who has access: Anyone" แล้วหรือยัง</span></div>`;
   }
 }
 
@@ -2898,25 +3521,42 @@ async function syncAllToSheets(){
   if(subs.length) steps.push({label:'มิเตอร์ย่อย', items:subs, action:'savesubmeter'});
   // Elec records
   steps.push({label:'ค่าไฟฟ้า', items:S.records, action:'saverecord'});
-  // Water records
-  steps.push({label:'ค่าน้ำ', items:S.water_records, action:'savewaterrecord'});
+  // Water records — กระจายเลขมิเตอร์ลงคอลัมน์ wm_* ให้อ่านในชีตได้ด้วย
+  steps.push({label:'ค่าน้ำ', action:'savewaterrecord', items:S.water_records.map(r=>{
+    const o={...r};
+    WATER_FLOOR_CONFIG.forEach(fc=>fc.meters.forEach(mk=>{
+      o['wm_'+mk.key+'_curr']=r.floor_meters?.[mk.key]??null;
+      o['wm_'+mk.key+'_units']=r.floors?.[mk.key]??null;
+    }));
+    return o;
+  })});
   // Shops
   steps.push({label:'ร้านเช่า', items:S.shops||[], action:'saveshop'});
   // Shop records
   steps.push({label:'บิลร้านเช่า', items:S.shop_records||[], action:'saveshoprecord'});
+  // Acks
+  if((S.ack_log||[]).length) steps.push({label:'การรับทราบ', items:S.ack_log, action:'saveack'});
 
+  const errs=[];
   for(const step of steps){
     upd(`กำลัง Sync: ${step.label} (${step.items.length} รายการ)...`);
     for(const item of step.items){
       try{ await apiCall(step.action, item); ok++; }
-      catch(e){ fail++; console.warn('sync fail',step.action, item.id, e.message); }
+      catch(e){ fail++; errs.push(`${step.label} (${item.id||'-'}): ${e.message}`); console.warn('sync fail',step.action, item.id, e.message); }
     }
   }
+  // Settings
+  upd('กำลัง Sync: ตั้งค่า...');
+  try{ await pushSettings(true); ok++; }catch(e){ fail++; errs.push('ตั้งค่า: '+e.message); }
+  // ล้างคิวค้างส่ง เพราะส่งใหม่หมดแล้ว
+  savePendingQ([]); renderPendingBadge();
   if(fail===0){
     el.innerHTML=`<div class="alert alert-success">✓ Sync สำเร็จทั้งหมด ${ok} รายการ ขึ้น Google Sheets แล้ว</div>`;
   } else {
-    el.innerHTML=`<div class="alert alert-warn">⚠ Sync เสร็จ: สำเร็จ ${ok} รายการ, ล้มเหลว ${fail} รายการ (ดูรายละเอียดใน Console)</div>`;
+    el.innerHTML=`<div class="alert alert-warn">⚠ Sync เสร็จ: สำเร็จ ${ok} รายการ, ล้มเหลว ${fail} รายการ<br>
+      <span style="font-size:11px">${errs.slice(0,5).map(x=>'· '+x).join('<br>')}${errs.length>5?`<br>· ... อีก ${errs.length-5} รายการ`:''}</span></div>`;
   }
+  await loadAllFromSheets(true);
 }
 
 /* ===================== EXPORT ===================== */
@@ -3185,6 +3825,7 @@ async function exportPNG(){
 /* ===================== START ===================== */
 ldCache();
 init();
+renderPendingBadge();
 renderDash();
 loadAllFromSheets(false);
 
@@ -3321,7 +3962,13 @@ if(currentRole){ applyRoleUI(); }
 
   const n1=seedOne('ร้านกาแฟ 2 Gether','R-KFE',csvKafe);
   const n2=seedOne('ผลิตภัณฑ์อาหารแปรรูปเพื่อสุขภาพ','R-FOOD',csvFood);
-  if(n1+n2>0){ sv(); localStorage.setItem(SEED_KEY,'1'); }
+  if(n1+n2>0){
+    sv(); localStorage.setItem(SEED_KEY,'1');
+    // เข้าคิวส่งขึ้น Sheet ด้วย ไม่ให้ค้างอยู่แค่ในเครื่อง
+    S.shops.forEach(s=>queuePending('saveshop',s));
+    S.shop_records.forEach(r=>queuePending('saveshoprecord',r));
+    renderPendingBadge();
+  }
 })();
 </script>
 </body>
