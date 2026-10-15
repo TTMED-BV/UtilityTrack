@@ -251,7 +251,7 @@ input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,9
       <div class="brand-icon">💧⚡</div>
       <div>
         <div class="brand-name">ระบบบันทึกค่าน้ำค่าไฟฟ้า</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px">v2.4 · 2026-10-15</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">v2.5 · 2026-10-15</div>
       </div>
     </div>
     <div class="brand-sub" id="org-name-side">คณะการแพทย์แผนไทย</div>
@@ -2526,8 +2526,9 @@ function wriBuildMeterRows(blocks,bid,rate){
 function previewWaterMeterImport(raw,prev,runBtn){
   const bid=document.getElementById('wri-bld').value;
   const rate=parseFloat(document.getElementById('wri-rate').value)||S.settings.fixed_water_rate||24;
-  const blocks=parseWaterMeterText(raw);
   wriMeterRows=[];
+  if(!bid){ prev.innerHTML='<div class="alert alert-warn">ยังไม่ได้เลือกอาคาร — ไปเพิ่มอาคารที่หน้า "จัดการอาคาร" ก่อน</div>'; runBtn.disabled=true; return; }
+  const blocks=parseWaterMeterText(raw);
   if(!blocks.length){
     prev.innerHTML='<div class="alert alert-warn">ไม่พบข้อมูล — ต้องมีบรรทัดชื่อเดือน (เช่น <b>ธันวาคม 2567</b>) แล้วตามด้วยบรรทัดเลขมิเตอร์ <b>(26) 0012334 | (27) 000208 | ...</b></div>';
     runBtn.disabled=true; return;
@@ -2627,47 +2628,55 @@ async function runWaterImport(){
   const runBtn=document.getElementById('wri-run-btn');
   // แปลงทั้ง 2 รูปแบบให้อยู่ในโครงเดียวกันก่อนบันทึก
   const jobs=(wriMode==='meter')
-    ? wriMeterRows.map(r=>({year:r.year,month:r.month,units:r.units,total:r.total,rate:r.rate,
-        floors:Object.assign({},r.floors,r.perMeter), floor_meters:r.meters, prevMeters:r.prevMeters||{},
-        note:r.baseline?'นำเข้าเลขมิเตอร์ (ตั้งต้น)':'นำเข้าเลขมิเตอร์'}))
-    : wriParsed.map(r=>({year:r.year,month:r.month,units:r.units,total:r.total,rate:r.rate,
+    ? meterRowsToJobs(wriMeterRows)
+    : wriParsed.map(r=>({mode:'floors',year:r.year,month:r.month,units:r.units,total:r.total,rate:r.rate,
         floors:r.floors, floor_meters:{}, prevMeters:{}, note:'นำเข้า CSV'}));
   if(!jobs.length){ msg.innerHTML='<span style="color:var(--red)">ไม่มีข้อมูลให้นำเข้า</span>'; return; }
   runBtn.disabled=true; msg.innerHTML=`<span style="color:var(--teal-d)"><span class="spinner"></span> กำลังนำเข้า ${jobs.length} เดือน...</span>`;
+  const res=await persistWaterRows(bid,jobs);
+  msg.innerHTML = waterImportMsg(res);
+  runBtn.disabled=false;
+  renderWaterReport();
+}
+
+/* บันทึกค่าน้ำหลายเดือนลงเครื่อง + ขึ้น Sheet (ใช้ร่วมกันทุกช่องทางนำเข้า) */
+async function persistWaterRows(bid,jobs){
+  const b=S.buildings.find(x=>x.id===bid);
   let ok=0,fail=0,lastErr='';
   for(const row of jobs){
     const existIdx=S.water_records.findIndex(r=>r.building_id===bid&&r.year===row.year&&r.month===row.month);
     const existId=existIdx>=0?S.water_records[existIdx].id:null;
     const rec={id:existId||('w'+Math.random().toString(36).slice(2)),building_id:bid,building_name:b?b.name:'',building_code:b?b.code:'',
-      year:row.year,month:row.month,units:row.units,total:row.total,rate:row.rate,note:row.note,
-      floors:row.floors,floor_meters:row.floor_meters,meter_prev:null,meter_curr:null};
+      year:row.year,month:row.month,units:row.units,total:row.total,rate:row.rate,note:row.note||'',
+      floors:row.floors||{},floor_meters:row.floor_meters||{},meter_prev:null,meter_curr:null};
     if(existIdx>=0){S.water_records[existIdx]=rec;}else{S.water_records.push(rec);}
     sv();
-    // send to sheets
     const wApiRec={id:rec.id,building_id:bid,building_name:rec.building_name,building_code:rec.building_code,
-      year:row.year,month:row.month,units:row.units,total:row.total,rate:row.rate,note:row.note,
-      floor_meters:row.floor_meters,floors:row.floors};
+      year:rec.year,month:rec.month,units:rec.units,total:rec.total,rate:rec.rate,note:rec.note,
+      floor_meters:rec.floor_meters,floors:rec.floors};
+    const isMeter = row.mode==='meter';
     WATER_FLOOR_CONFIG.forEach(fc=>{fc.meters.forEach(mk=>{
-      if(wriMode==='meter'){
-        wApiRec['wm_'+mk.key+'_prev']=row.prevMeters[mk.key]??null;
-        wApiRec['wm_'+mk.key+'_curr']=row.floor_meters[mk.key]??null;
-        wApiRec['wm_'+mk.key+'_units']=row.floors[mk.key]??null;
-      } else {
-        wApiRec['wm_'+mk.key+'_prev']=null;
-        wApiRec['wm_'+mk.key+'_curr']=null;
-        wApiRec['wm_'+mk.key+'_units']=row.floors[fc.floor]??null;
-      }
+      wApiRec['wm_'+mk.key+'_prev'] = isMeter ? (row.prevMeters?.[mk.key]??null) : null;
+      wApiRec['wm_'+mk.key+'_curr'] = isMeter ? (rec.floor_meters[mk.key]??null) : null;
+      wApiRec['wm_'+mk.key+'_units']= isMeter ? (rec.floors[mk.key]??null) : (rec.floors[fc.floor]??null);
     });});
     const r=await apiSave('savewaterrecord',wApiRec);
     if(r.ok){ reconcileId(S.water_records,rec,r.res); ok++; }
     else{ fail++; console.warn('water import row failed',r.error); lastErr=r.error; }
   }
-  msg.innerHTML = ok
-    ? `<span style="color:var(--green-d)">✓ ขึ้น Google Sheets แล้ว ${ok} เดือน${fail?` · <span style="color:var(--amber-d)">ค้างส่ง ${fail} เดือน (กดปุ่มส้มมุมซ้ายล่างส่งซ้ำ)</span>`:''}</span>`
-    : `<span style="color:var(--red)">⚠ ยังไม่ขึ้น Sheet เลย ${fail} เดือน — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11px">สาเหตุ: ${lastErr||'ไม่ทราบ'}</span></span>`;
-  runBtn.disabled=false;
   renderPendingBadge();
-  renderWaterReport();
+  return {ok,fail,lastErr};
+}
+function waterImportMsg(res){
+  return res.ok
+    ? `<span style="color:var(--green-d)">✓ ขึ้น Google Sheets แล้ว ${res.ok} เดือน${res.fail?` · <span style="color:var(--amber-d)">ค้างส่ง ${res.fail} เดือน (กดปุ่มส้มมุมซ้ายล่างส่งซ้ำ)</span>`:''}</span>`
+    : `<span style="color:var(--red)">⚠ ยังไม่ขึ้น Sheet เลย ${res.fail} เดือน — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11px">สาเหตุ: ${res.lastErr||'ไม่ทราบ'}</span></span>`;
+}
+// แปลงผลจากตัวอ่านเลขมิเตอร์ → job สำหรับ persistWaterRows
+function meterRowsToJobs(rows){
+  return rows.map(r=>({mode:'meter',year:r.year,month:r.month,units:r.units,total:r.total,rate:r.rate,
+    floors:Object.assign({},r.floors,r.perMeter), floor_meters:r.meters, prevMeters:r.prevMeters||{},
+    note:r.baseline?'นำเข้าเลขมิเตอร์ (ตั้งต้น)':'นำเข้าเลขมิเตอร์'}));
 }
 
 /* ===================== COMPARE / TREND / HEATMAP / TABLE ===================== */
@@ -3176,11 +3185,22 @@ function openImportModal(type){
   document.getElementById('imp-rate-label').textContent=isW?'อัตราค่าน้ำ (บาท/ลบ.ม.)':'อัตราค่าไฟ (บาท/kWh)';
   document.getElementById('imp-rate').placeholder=isW?'เช่น 24.00':'เช่น 5.00';
   document.getElementById('imp-fmt-hint').innerHTML=isW
-    ?'รูปแบบ: <strong>ปี(พ.ศ.) [Tab] เดือน(1-12) [Tab] หน่วย(ลบ.ม.) [Tab] ยอดเงิน(บาท)</strong><br>หรือ: ปี [Tab] เดือน [Tab] มิเตอร์เก่า [Tab] มิเตอร์ใหม่ [Tab] อัตรา'
+    ?`<b style="color:var(--teal-d)">① เลขมิเตอร์รายชั้น</b> — บรรทัดชื่อเดือน แล้วบรรทัดเลขมิเตอร์ (วางหลายเดือนติดกันได้):<br>
+       <code style="font-size:11px;background:var(--surface2);padding:2px 4px;border-radius:4px;display:inline-block;margin:3px 0">ธันวาคม 2567<br>(26) 0012334 | (27) 000208 | (29) 000419 | ...</code><br>
+       <b>② CSV รวม</b> — ปี(พ.ศ.) [Tab] เดือน(1-12) [Tab] หน่วย(ลบ.ม.) [Tab] ยอดเงิน(บาท)`
     :'รูปแบบ: <strong>ปี(พ.ศ.) [Tab] เดือน(1-12) [Tab] หน่วย(kWh) [Tab] ยอดเงิน(บาท)</strong><br>หรือ: ปี [Tab] เดือน [Tab] มิเตอร์เก่า [Tab] มิเตอร์ใหม่ [Tab] อัตรา';
   // populate buildings
   const bldSel=document.getElementById('imp-bld');
-  bldSel.innerHTML=S.buildings.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  bldSel.innerHTML=S.buildings.length
+    ? S.buildings.map(b=>`<option value="${b.id}">${b.name}${b.active?'':' (ซ่อนอยู่)'}</option>`).join('')
+    : '<option value="">— ยังไม่มีอาคาร กรุณาเพิ่มที่หน้า จัดการอาคาร —</option>';
+  const curBld=document.getElementById('wr-bld')?.value;
+  if(curBld&&[...bldSel.options].some(o=>o.value===curBld)) bldSel.value=curBld;
+  const rEl=document.getElementById('imp-rate');
+  rEl.value = isW ? (S.settings.fixed_water_rate||24) : (S.settings.fixed_elec_rate||'');
+  rEl.oninput = previewImport;
+  bldSel.onchange = previewImport;
+  impMeterRows=[];
   document.getElementById('imp-data').value='';
   document.getElementById('imp-preview').innerHTML='<span style="color:var(--text3)">วางข้อมูลแล้วจะแสดง preview ที่นี่</span>';
   document.getElementById('imp-go-btn').disabled=true;
@@ -3211,13 +3231,64 @@ function parseImportData(raw,type){
   return parsed;
 }
 
+const METER_TEXT_RE=/\(\d{1,4}\)\s*[:=]?\s*\d/;
+let impMeterRows=[];
+// หน้าตารางรายงาน: ปุ่ม 💧 นำเข้าค่าน้ำ ก็รับรูปแบบ "(26) 0012334 | (27) 000208 | ..." ได้เหมือนกัน
+function previewImportWaterMeter(raw){
+  const prev=document.getElementById('imp-preview');
+  const btn=document.getElementById('imp-go-btn');
+  const bid=document.getElementById('imp-bld').value;
+  const rate=parseFloat(document.getElementById('imp-rate').value)||S.settings.fixed_water_rate||24;
+  impMeterRows=[];
+  if(!bid){ prev.innerHTML='<span style="color:var(--red)">⚠️ ยังไม่ได้เลือกอาคาร — ไปเพิ่มอาคารที่หน้า "จัดการอาคาร" ก่อน</span>'; btn.disabled=true; return; }
+  const blocks=parseWaterMeterText(raw);
+  if(!blocks.length){
+    prev.innerHTML='<span style="color:var(--red)">⚠️ อ่านไม่ได้ — ต้องมีบรรทัดชื่อเดือน (เช่น <b>ธันวาคม 2567</b>) อยู่เหนือบรรทัดเลขมิเตอร์</span>';
+    btn.disabled=true; return;
+  }
+  impMeterRows=wriBuildMeterRows(blocks,bid,rate);
+  const floors=WATER_FLOORS;
+  let h=`<div style="font-weight:600;margin-bottom:6px;color:var(--teal-d)">💧 ตรวจพบรูปแบบ “เลขมิเตอร์” — ${impMeterRows.length} เดือน · คำนวณหน่วยจากผลต่างให้อัตโนมัติ</div>
+    <div style="overflow-x:auto"><table class="tbl" style="font-size:11px"><thead><tr><th>เดือน</th>
+    ${floors.map(f=>`<th style="text-align:right;color:var(--teal-d)">ชั้น${f}</th>`).join('')}
+    <th style="text-align:right">รวม</th><th style="text-align:right">ยอด</th><th>สถานะ</th></tr></thead><tbody>`;
+  impMeterRows.forEach(row=>{
+    const ex=S.water_records.find(r=>r.building_id===bid&&r.year===row.year&&r.month===row.month);
+    let st=row.baseline?'<span class="badge badge-blue">ตั้งต้น</span>':(ex?'<span class="badge badge-amber">อัปเดต</span>':'<span class="badge badge-green">ใหม่</span>');
+    if(row.warn.length) st+=` <span class="badge badge-red" title="${row.warn.join(' / ')}">⚠</span>`;
+    h+=`<tr><td style="white-space:nowrap">${MN_TH[row.month-1]} ${row.year}</td>`;
+    floors.forEach(f=>{h+=`<td style="text-align:right">${row.floors[f]!=null?row.floors[f].toLocaleString():'—'}</td>`;});
+    h+=`<td style="text-align:right;font-weight:700">${row.units?row.units.toLocaleString():'—'}</td>
+        <td style="text-align:right;color:var(--teal-d)">${row.units?row.total.toLocaleString('th-TH',{minimumFractionDigits:2}):'—'}</td>
+        <td style="white-space:nowrap">${st}</td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  prev.innerHTML=h;
+  btn.disabled=false;
+}
+async function runImportWaterMeter(){
+  const bid=document.getElementById('imp-bld').value;
+  if(!impMeterRows.length) return;
+  const btn=document.getElementById('imp-go-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> กำลังส่งขึ้น Sheet...';
+  const res=await persistWaterRows(bid,meterRowsToJobs(impMeterRows));
+  btn.disabled=false; btn.innerHTML='📥 นำเข้า';
+  cm('mo-import');
+  renderTable(); renderDash(); renderWaterReport();
+  alert(res.ok
+    ? `✅ นำเข้าค่าน้ำ ${res.ok} เดือน ขึ้น Google Sheets แล้ว${res.fail?`\n⚠ ค้างส่งอีก ${res.fail} เดือน — กดปุ่มส้มมุมซ้ายล่างส่งซ้ำ`:''}`
+    : `⚠ ยังไม่ขึ้น Sheet ${res.fail} เดือน — เก็บเข้าคิวค้างส่งแล้ว\nสาเหตุ: ${res.lastErr}`);
+}
+
 function previewImport(){
   const raw=document.getElementById('imp-data').value;
+  if(_importType==='water'&&METER_TEXT_RE.test(raw)) return previewImportWaterMeter(raw);
+  impMeterRows=[];
   const parsed=parseImportData(raw,_importType);
   const btn=document.getElementById('imp-go-btn');
   const prev=document.getElementById('imp-preview');
   if(!parsed.length){
-    prev.innerHTML='<span style="color:var(--red)">⚠️ ไม่พบข้อมูลที่อ่านได้ — ตรวจสอบรูปแบบอีกครั้ง</span>';
+    prev.innerHTML=`<span style="color:var(--red)">⚠️ ไม่พบข้อมูลที่อ่านได้ — ตรวจสอบรูปแบบอีกครั้ง</span>${_importType==='water'?'<br><span style="font-size:11px;color:var(--text3)">ถ้าจะวางแบบเลขมิเตอร์ <code>(26) 0012334 | (27) 000208 | ...</code> ต้องมีบรรทัดชื่อเดือนอยู่เหนือด้วย เช่น <b>ธันวาคม 2567</b></span>':''}`;
     btn.disabled=true;return;
   }
   const MN=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -3229,6 +3300,7 @@ function previewImport(){
 
 async function runImport(){
   const raw=document.getElementById('imp-data').value;
+  if(_importType==='water'&&METER_TEXT_RE.test(raw)) return runImportWaterMeter();
   const parsed=parseImportData(raw,_importType);
   if(!parsed.length)return;
   const isW=_importType==='water';
