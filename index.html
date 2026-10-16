@@ -63,6 +63,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans Thai',sa
 .btn-d{background:var(--bad-l);color:var(--bad);border-color:#F5C4C8}
 .btn-d:hover{background:var(--bad);color:#fff}
 .btn-s{padding:5px 10px;font-size:12px}
+/* สวิตช์ ปีงบ / ปีปฏิทิน */
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--card)}
+.sgb{padding:5px 11px;font:inherit;font-size:12px;font-weight:600;border:0;background:transparent;color:var(--t2);cursor:pointer;white-space:nowrap;transition:.13s}
+.sgb:hover{background:var(--psu-l);color:var(--psu-2)}
+.sgb+.sgb{border-left:1px solid var(--line2)}
+.sgb.on{background:var(--psu);color:#fff}
+.sgb.on:hover{background:var(--psu-2);color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:18px;box-shadow:var(--sh)}
 .card+.card{margin-top:16px}
 .ch{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
@@ -174,7 +181,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       <div class="g4 k2" id="dash-kpi" style="margin-bottom:16px"></div>
       <div class="card">
         <div class="ch"><div><div class="ct">⚡ ค่าไฟรายเดือน — แบ่งโรงพยาบาล / คณะ</div><div class="cs">คำนวณจากสัดส่วนหน่วยมิเตอร์ชั้น B+1+2</div></div>
-          <select id="dash-yr" class="btn btn-s" style="width:auto" onchange="renderDash()"></select></div>
+          <div class="row"><span id="ytg-dash"></span>
+          <select id="dash-yr" class="btn btn-s" style="width:auto" onchange="renderDash()"></select></div></div>
         <div class="chart"><canvas id="c-dash-e"></canvas></div>
       </div>
       <div class="card">
@@ -278,7 +286,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
     <div class="page" id="p-erep">
       <div class="card">
         <div class="ch"><div><div class="ct">⚡ รายงานค่าไฟฟ้า</div><div class="cs">แบ่งโรงพยาบาล / คณะ ตามสัดส่วนหน่วย</div></div>
-          <div class="row"><select id="er-yr" class="btn btn-s" style="width:auto" onchange="renderERep()"></select>
+          <div class="row"><span id="ytg-er"></span>
+          <select id="er-yr" class="btn btn-s" style="width:auto" onchange="renderERep()"></select>
           <button class="btn btn-s" onclick="exportXLSX('elec')">📥 Excel</button></div></div>
         <div class="scroll" id="er-tbl"></div>
       </div>
@@ -286,7 +295,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
     <div class="page" id="p-wrep">
       <div class="card">
         <div class="ch"><div><div class="ct">💧 รายงานค่าน้ำ</div><div class="cs">แบ่งโรงพยาบาล / คณะ ตามสัดส่วนหน่วย</div></div>
-          <div class="row"><select id="wr-yr" class="btn btn-s" style="width:auto" onchange="renderWRep()"></select>
+          <div class="row"><span id="ytg-wr"></span>
+          <select id="wr-yr" class="btn btn-s" style="width:auto" onchange="renderWRep()"></select>
           <button class="btn btn-s" onclick="exportXLSX('water')">📥 Excel</button></div></div>
         <div class="scroll" id="wr-tbl"></div>
       </div>
@@ -305,7 +315,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
         <div class="chart"><canvas id="c-trend"></canvas></div>
       </div>
       <div class="card">
-        <div class="ch"><div><div class="ct">เปรียบเทียบรายปี</div><div class="cs">เดือนเดียวกันคนละปี</div></div></div>
+        <div class="ch"><div><div class="ct">เปรียบเทียบรายปี</div><div class="cs" id="an-ysub">เดือนเดียวกันคนละปี</div></div>
+          <span id="ytg-an"></span></div>
         <div class="chart"><canvas id="c-year"></canvas></div>
       </div>
       <div class="g2">
@@ -318,8 +329,9 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
     <div class="page" id="p-heat">
       <div class="card">
         <div class="ch"><div><div class="ct">Heatmap การใช้งาน</div><div class="cs">เทียบกับค่าเฉลี่ยของตัวเอง — เขียวปกติ เหลือง +10% ส้ม +20% แดง +30%</div></div>
+          <div class="row"><span id="ytg-hm"></span>
           <select id="hm-type" class="btn btn-s" style="width:auto" onchange="renderHeat()">
-            <option value="elec">⚡ หน่วยไฟ</option><option value="water">💧 หน่วยน้ำ</option></select></div>
+            <option value="elec">⚡ หน่วยไฟ</option><option value="water">💧 หน่วยน้ำ</option></select></div></div>
         <div class="scroll" id="hm-box"></div>
       </div>
     </div>
@@ -364,6 +376,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       <div class="card">
         <div class="ch"><div><div class="ct">🧾 รายงานร้านเช่า</div><div class="cs">สรุปค่าไฟ-ค่าน้ำแต่ละร้าน</div></div>
           <div class="row">
+            <span id="ytg-sr"></span>
             <select id="sr-mode" class="btn btn-s" style="width:auto" onchange="renderSRep()">
               <option value="year">📊 รายปี (ทั้งปี)</option><option value="month">📅 รายเดือน</option></select>
             <select id="sr-yr" class="btn btn-s" style="width:auto" onchange="renderSRep()"></select>
@@ -456,8 +469,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
-const APP_VERSION = 'v4.5';
-const APP_BUILD   = '2026-10-16 09:10';
+const APP_VERSION = 'v4.6';
+const APP_BUILD   = '2026-10-16 15:40';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const C = { psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' };
@@ -563,10 +576,51 @@ function allMonths(){
   [...S.elec_meter,...S.water_meter].forEach(r=>s.add(mkey(+r.year,+r.month)));
   return [...s].sort((a,b)=>a-b).map(k=>[Math.floor(k/100),k%100]);
 }
+
+/* -----------------------------------------------------------------------
+   1b) โหมดการแสดงผล — ปีงบประมาณ (ต.ค.–ก.ย.) หรือ ปีปฏิทิน (ม.ค.–ธ.ค.)
+   ปีงบ 2569 = ต.ค. 2568 ถึง ก.ย. 2569  (ตามระบบราชการไทย)
+   เป็นค่าของรอบการใช้งานนี้เท่านั้น เปิดโปรแกรมใหม่จะกลับเป็น "ปีงบ" ทุกครั้ง
+   ----------------------------------------------------------------------- */
+let YMODE = 'fy';
+const isFY   = () => YMODE==='fy';
+/** ปีงบประมาณของเดือนนั้น — ต.ค./พ.ย./ธ.ค. นับเป็นปีงบถัดไป */
+const fyOf   = (y,m) => (+m>=10 ? +y+1 : +y);
+/** ปีที่ใช้แสดงผล ตามโหมดที่เลือกอยู่ */
+const yrOf   = (y,m) => isFY() ? fyOf(y,m) : +y;
+const yrLbl  = y => isFY() ? `ปีงบ ${y}` : `ปี ${y}`;
+/** ช่วงเดือนจริงของปีที่แสดง เอาไว้บอกผู้ใช้ว่าปีงบนี้คือเดือนไหนถึงเดือนไหน */
+const yrRange= y => isFY() ? `ต.ค. ${y-1} – ก.ย. ${y}` : `ม.ค. – ธ.ค. ${y}`;
+/** ลำดับเดือนในตาราง/กราฟ — โหมดปีงบเรียง ต.ค. → ก.ย. */
+const monthOrder = () => isFY() ? [10,11,12,1,2,3,4,5,6,7,8,9] : [1,2,3,4,5,6,7,8,9,10,11,12];
+/** 12 ช่องของปีที่แสดง คืนเป็นคู่ [ปีปฏิทิน, เดือน] เรียงตามโหมด */
+const yearCells = y => monthOrder().map(m => [ (isFY() && m>=10) ? y-1 : y, m ]);
+/** ปีปฏิทินจริงของเดือน m ภายใต้ปีที่แสดง y */
+const calYear = (y,m) => (isFY() && +m>=10) ? y-1 : y;
+/** ป้ายเดือน — โหมดปีงบต้องมีเลขปีกำกับ ไม่งั้น ต.ค.68 กับ ม.ค.69 แยกไม่ออก */
+const mLbl  = (y,m,full) => `${(full?MFL:MN)[m-1]}${isFY()?` ${String(y).slice(-2)}`:''}`;
+const inYear = (c,y) => yrOf(c.y,c.m)===y;
+
 function years(){
-  const ys=[...new Set(allMonths().map(x=>x[0]))].sort();
-  if(!ys.length) ys.push(new Date().getFullYear()+543);
+  const ys=[...new Set(allMonths().map(([y,m])=>yrOf(y,m)))].sort((a,b)=>a-b);
+  if(!ys.length){ const d=new Date(); ys.push(yrOf(d.getFullYear()+543,d.getMonth()+1)); }
   return ys;
+}
+function ytgHTML(){
+  return `<span class="seg">
+    <button class="sgb${isFY()?' on':''}" onclick="setYMode('fy')" title="ต.ค. ถึง ก.ย. ปีถัดไป">ปีงบ</button>
+    <button class="sgb${isFY()?'':' on'}" onclick="setYMode('cy')" title="ม.ค. ถึง ธ.ค.">ปีปฏิทิน</button></span>`;
+}
+const YTG = ['dash','er','wr','an','hm','sr'];
+function paintYtg(){ YTG.forEach(k=>{ const el=$('ytg-'+k); if(el) el.innerHTML=ytgHTML(); }); }
+function setYMode(v){
+  if(YMODE===v) return;
+  YMODE = v;
+  // ปีที่ค้างอยู่ใน dropdown เป็นคนละระบบนับ ต้องล้างก่อน ไม่งั้นจะเลือกปีที่ไม่มีอยู่
+  ['dash-yr','er-yr','wr-yr','sr-yr','sr-mo'].forEach(id=>{ const el=$(id); if(el) el.innerHTML=''; });
+  paintYtg();
+  const p=curPage();
+  if(['dash','erep','wrep','ana','heat','srep'].includes(p)) render(p);
 }
 
 /* =======================================================================
@@ -858,12 +912,19 @@ function badges(){
 }
 function dc(k){ if(charts[k]){ charts[k].destroy(); delete charts[k]; } }
 function yrSel(el,fn){
-  const ys=years(); const cur=+el.value||ys[ys.length-1];
-  el.innerHTML=ys.map(y=>`<option value="${y}"${y===cur?' selected':''}>ปี ${y}</option>`).join('');
+  const ys=years(); let cur=+el.value||ys[ys.length-1];
+  if(!ys.includes(cur)) cur=ys[ys.length-1];
+  el.innerHTML=ys.map(y=>`<option value="${y}"${y===cur?' selected':''}>${yrLbl(y)}</option>`).join('');
   return +el.value;
 }
 function monthSel(el){
   el.innerHTML=MFL.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+}
+/** เลือกเดือนสำหรับหน้ารายงาน — เรียงตามโหมด (ปีงบ = ต.ค. มาก่อน) */
+function moSel(el){
+  const ord=monthOrder(); let cur=+el.value||ord[0];
+  if(!ord.includes(cur)) cur=ord[0];
+  el.innerHTML=ord.map(m=>`<option value="${m}"${m===cur?' selected':''}>${MFL[m-1]}</option>`).join('');
 }
 
 /* =======================================================================
@@ -1165,9 +1226,10 @@ function waterClear(){ meters('water').forEach(mc=>$('wc-'+mc.id).value=''); ['w
    7) DASHBOARD
    ======================================================================= */
 function renderDash(){
+  paintYtg();
   const ys=years(); const y=yrSel($('dash-yr'));
-  const E=computedMonths('elec').filter(c=>c.y===y);
-  const W=computedMonths('water').filter(c=>c.y===y);
+  const E=computedMonths('elec').filter(c=>inYear(c,y));
+  const W=computedMonths('water').filter(c=>inYear(c,y));
   // เดือนล่าสุดที่คิดเงินได้จริง (มีทั้งหน่วยรวมและยอดเงิน)
   const lastOf=t=>{ const a=computedMonths(t).filter(c=>c.totalCost!=null); return a.length?a[a.length-1]:null; };
   const lastE=lastOf('elec'), lastW=lastOf('water');
@@ -1177,18 +1239,18 @@ function renderDash(){
       <div class="kpi-s">${lastE?MFL[lastE.m-1]+' '+lastE.y:'ยังไม่มีข้อมูล'} · ${lastE?fmt(lastE.totalUnit)+' kWh':''}</div></div>
     <div class="kpi k-t"><div class="kpi-l">💧 ค่าน้ำเดือนล่าสุด</div><div class="kpi-v">${lastW&&lastW.totalCost!=null?fmt(lastW.totalCost):'—'}</div>
       <div class="kpi-s">${lastW?MFL[lastW.m-1]+' '+lastW.y:'ยังไม่มีข้อมูล'} · ${lastW?fmt(lastW.totalUnit)+' ลบ.ม.':''}</div></div>
-    <div class="kpi k-g"><div class="kpi-l">ค่าไฟสะสมปี ${y}</div><div class="kpi-v">${fmt(sum(E,'totalCost'))}</div>
+    <div class="kpi k-g"><div class="kpi-l">ค่าไฟสะสม ${yrLbl(y)}</div><div class="kpi-v">${fmt(sum(E,'totalCost'))}</div>
       <div class="kpi-s">บาท · ${fmt(sum(E,'totalUnit'))} kWh</div></div>
-    <div class="kpi k-r"><div class="kpi-l">ค่าน้ำสะสมปี ${y}</div><div class="kpi-v">${fmt(sum(W,'totalCost'))}</div>
+    <div class="kpi k-r"><div class="kpi-l">ค่าน้ำสะสม ${yrLbl(y)}</div><div class="kpi-v">${fmt(sum(W,'totalCost'))}</div>
       <div class="kpi-s">บาท · ${fmt(sum(W,'totalUnit'))} ลบ.ม.</div></div>
     <div class="kpi k-b"><div class="kpi-l">🏥 ค่าไฟโรงพยาบาลสะสม</div><div class="kpi-v">${fmt(sum(E,'hospCost'))}</div>
-      <div class="kpi-s">บาท · ปี ${y}</div></div>
+      <div class="kpi-s">บาท · ${yrLbl(y)}</div></div>
     <div class="kpi k-g"><div class="kpi-l">🏛️ ค่าไฟคณะสะสม</div><div class="kpi-v">${fmt(sum(E,'facCost'))}</div>
-      <div class="kpi-s">บาท · ปี ${y}</div></div>
+      <div class="kpi-s">บาท · ${yrLbl(y)}</div></div>
     <div class="kpi k-t"><div class="kpi-l">🏥 ค่าน้ำโรงพยาบาลสะสม</div><div class="kpi-v">${fmt(sum(W,'hospCost'))}</div>
-      <div class="kpi-s">บาท · ปี ${y}</div></div>
+      <div class="kpi-s">บาท · ${yrLbl(y)}</div></div>
     <div class="kpi k-r"><div class="kpi-l">🏛️ ค่าน้ำคณะสะสม</div><div class="kpi-v">${fmt(sum(W,'facCost'))}</div>
-      <div class="kpi-s">บาท · ปี ${y}</div></div>`;
+      <div class="kpi-s">บาท · ${yrRange(y)}</div></div>`;
   stackChart('c-dash-e','dashE',E,'บาท');
   stackChart('c-dash-w','dashW',W,'บาท');
 
@@ -1202,7 +1264,7 @@ function renderDash(){
 function stackChart(canvasId,key,rows,unit){
   dc(key);
   const el=$(canvasId); if(!el) return;
-  const labels=rows.map(c=>MN[c.m-1]);
+  const labels=rows.map(c=>mLbl(c.y,c.m));
   charts[key]=new Chart(el,{type:'bar',data:{labels,datasets:[
     {label:'โรงพยาบาล',data:rows.map(c=>c.hospCost??0),backgroundColor:C.psu,borderRadius:4},
     {label:'คณะ',data:rows.map(c=>c.facCost??0),backgroundColor:C.gold,borderRadius:4}
@@ -1217,21 +1279,22 @@ function stackChart(canvasId,key,rows,unit){
    ======================================================================= */
 function repTable(type){
   const y=+$(type==='elec'?'er-yr':'wr-yr').value;
-  const rows=computedMonths(type).filter(c=>c.y===y);
+  const rows=computedMonths(type).filter(c=>inYear(c,y));
   const U=type==='elec'?'kWh':'ลบ.ม.';
   const zoneName=type==='elec'?'ค่าไฟ':'ค่าน้ำ';
-  if(!rows.length) return `<div class="muted" style="padding:20px;text-align:center">ยังไม่มีข้อมูลปี ${y}</div>`;
+  if(!rows.length) return `<div class="muted" style="padding:20px;text-align:center">ยังไม่มีข้อมูล${yrLbl(y)} (${yrRange(y)})</div>`;
   // แถวรวม: นับเฉพาะเดือนที่มีทั้งหน่วยรวมและยอดเงิน ไม่งั้นสัดส่วนรวมจะเพี้ยน
   const full=rows.filter(c=>c.totalUnit!=null&&c.totalCost!=null&&c.nMeter>0);
   const T=k=>full.reduce((s,c)=>s+(c[k]||0),0);
   const skipped=rows.length-full.length;
-  return `<table><thead><tr>
+  return `<div class="hint" style="padding:0 2px 8px">${yrLbl(y)} = ${yrRange(y)}</div>
+    <table><thead><tr>
     <th>เดือน</th><th class="num">หน่วยรวม (${U})</th><th class="num">${zoneName}มหาวิทยาลัย</th>
     <th class="num">หน่วย B+1+2</th><th class="num">สัดส่วน</th>
     <th class="num">${zoneName}โรงพยาบาล</th><th class="num">${zoneName}คณะ</th>
     <th class="num">เฉลี่ย/ชั้น รพ.</th><th class="num">เฉลี่ย/ชั้น คณะ</th></tr></thead><tbody>
     ${rows.map(c=>`<tr>
-      <td style="white-space:nowrap">${MFL[c.m-1]}</td>
+      <td style="white-space:nowrap">${MFL[c.m-1]}${isFY()?` <span class="muted" style="font-size:11px">${c.y}</span>`:''}</td>
       <td class="num">${fmt(c.totalUnit,1)}</td>
       <td class="num" style="font-weight:600">${fmt(c.totalCost)}</td>
       <td class="num">${fmt(c.hospUnit,1)}</td>
@@ -1249,13 +1312,13 @@ function repTable(type){
       <td colspan="2"></td></tr></tbody></table>
     ${skipped?`<div class="hint" style="padding:8px 2px">แถวรวมไม่นับ ${skipped} เดือนที่ยังกรอกไม่ครบ (ต้องมีทั้งหน่วยรวมและยอดเงินจากบิล)</div>`:''}`;
 }
-function renderERep(){ yrSel($('er-yr')); $('er-tbl').innerHTML=repTable('elec'); }
+function renderERep(){ paintYtg(); yrSel($('er-yr')); $('er-tbl').innerHTML=repTable('elec'); }
 function renderWRep(){
-  yrSel($('wr-yr')); $('wr-tbl').innerHTML=repTable('water');
+  paintYtg(); yrSel($('wr-yr')); $('wr-tbl').innerHTML=repTable('water');
   const y=+$('wr-yr').value, cfg=meters('water');
-  const ms=allMonths().filter(([yy])=>yy===y);
+  const ms=allMonths().filter(([yy,mm])=>yrOf(yy,mm)===y);
   $('wr-meter').innerHTML = ms.length ? `<table><thead><tr><th>มิเตอร์</th><th>ชั้น</th><th>โซน</th>
-    ${ms.map(([,m])=>`<th class="num">${MN[m-1]}</th>`).join('')}<th class="num">รวม</th></tr></thead><tbody>
+    ${ms.map(([yy,m])=>`<th class="num">${mLbl(yy,m)}</th>`).join('')}<th class="num">รวม</th></tr></thead><tbody>
     ${cfg.map(mc=>{
       const vals=ms.map(([yy,mm])=>{ const r=meterRow('water',yy,mm,mc.id); return r?n(r.used_unit):null; });
       const tot=vals.filter(v=>v!=null).reduce((s,v)=>s+v,0);
@@ -1270,6 +1333,7 @@ function renderWRep(){
    9) ANALYZE / HEATMAP / QUALITY
    ======================================================================= */
 function renderAna(){
+  paintYtg();
   const type=$('an-type').value;
   const rows=computedMonths(type);
   dc('trend');
@@ -1284,10 +1348,13 @@ function renderAna(){
       scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>fmt(v)}}}}});
 
   const ys=years();
+  const ord=monthOrder();
+  const sub=$('an-ysub');
+  if(sub) sub.textContent = isFY() ? 'เดือนเดียวกันคนละปีงบ — เรียง ต.ค. ถึง ก.ย.' : 'เดือนเดียวกันคนละปี';
   dc('year');
-  charts.year=new Chart($('c-year'),{type:'bar',data:{labels:MN,datasets:ys.map((yy,i)=>({
-    label:'ปี '+yy, backgroundColor:[C.psu,C.gold,C.teal,C.rose][i%4], borderRadius:4,
-    data:MN.map((_,mi)=>{ const c=rows.find(x=>x.y===yy&&x.m===mi+1); return c?(c.totalCost??0):0; })
+  charts.year=new Chart($('c-year'),{type:'bar',data:{labels:ord.map(m=>MN[m-1]),datasets:ys.map((yy,i)=>({
+    label:yrLbl(yy), backgroundColor:[C.psu,C.gold,C.teal,C.rose][i%4], borderRadius:4,
+    data:yearCells(yy).map(([cy,cm])=>{ const c=rows.find(x=>x.y===cy&&x.m===cm); return c?(c.totalCost??0):0; })
   }))},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}},
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>fmt(v)}}}}});
@@ -1309,6 +1376,7 @@ function renderAna(){
   $('an-topw').innerHTML=rank('water');
 }
 function renderHeat(){
+  paintYtg();
   const type=$('hm-type').value, cfg=meters(type), ms=allMonths();
   if(!ms.length||!cfg.length){ $('hm-box').innerHTML='<div class="muted" style="padding:20px;text-align:center">ยังไม่มีข้อมูล</div>'; return; }
   const avg={};
@@ -1316,19 +1384,23 @@ function renderHeat(){
     avg[mc.id]=v.length?v.reduce((a,b)=>a+b,0)/v.length:0; });
   const col=p=>p>=1.3?['#7F1D1D','#FECACA']:p>=1.2?['#9A3412','#FED7AA']:p>=1.1?['#854D0E','#FEF08A']:['#14532D','#D1FAE5'];
   let h=`<div class="hm" style="grid-template-columns:118px repeat(${ms.length},minmax(44px,1fr))">`;
-  h+=`<div class="hm-l"></div>`+ms.map(([y,m])=>`<div class="hm-h">${MN[m-1]}<br><span style="opacity:.6">${String(y).slice(-2)}</span></div>`).join('');
+  // ขีดเส้นแบ่งตรงที่ขึ้นปีใหม่ (ปีงบจะแบ่งที่ ต.ค.) จะได้เห็นขอบปีชัด
+  const brk=ms.map(([y,m],i)=> i>0 && yrOf(y,m)!==yrOf(ms[i-1][0],ms[i-1][1]));
+  const bd=i=>brk[i]?'border-left:2px solid var(--psu-2);':'';
+  h+=`<div class="hm-l"></div>`+ms.map(([y,m],i)=>`<div class="hm-h" style="${bd(i)}">${MN[m-1]}<br><span style="opacity:.6">${isFY()?'งบ '+String(yrOf(y,m)).slice(-2):String(y).slice(-2)}</span></div>`).join('');
   cfg.forEach(mc=>{
     h+=`<div class="hm-l"><span class="fl${mc.zone==='faculty'?' fac':''}" style="margin-right:5px">${esc(mc.floor)}</span>${esc(mc.code)}</div>`;
-    ms.forEach(([y,m])=>{
+    ms.forEach(([y,m],i)=>{
       const r=meterRow(type,y,m,mc.id), v=r?n(r.used_unit):null;
-      if(v==null){ h+=`<div class="hm-c" style="background:var(--soft2);color:var(--t3)">—</div>`; return; }
+      if(v==null){ h+=`<div class="hm-c" style="background:var(--soft2);color:var(--t3);${bd(i)}">—</div>`; return; }
       const p=avg[mc.id]?v/avg[mc.id]:1; const [fg,bg]=col(p);
-      h+=`<div class="hm-c" style="background:${bg};color:${fg}" title="${MFL[m-1]} ${y}: ${fmt(v,2)} (${(p*100).toFixed(0)}% ของค่าเฉลี่ย)">${v>=1000?(v/1000).toFixed(1)+'k':fmt(v,0)}</div>`;
+      h+=`<div class="hm-c" style="background:${bg};color:${fg};${bd(i)}" title="${MFL[m-1]} ${y} (${yrLbl(yrOf(y,m))}): ${fmt(v,2)} (${(p*100).toFixed(0)}% ของค่าเฉลี่ย)">${v>=1000?(v/1000).toFixed(1)+'k':fmt(v,0)}</div>`;
     });
   });
   h+='</div><div class="row mt" style="font-size:11.5px;color:var(--t2)">';
   [['#D1FAE5','ปกติ'],['#FEF08A','+10%'],['#FED7AA','+20%'],['#FECACA','+30%']].forEach(([c,l])=>
     h+=`<span class="row" style="gap:5px"><span style="width:18px;height:12px;background:${c};border-radius:3px;display:inline-block"></span>${l}</span>`);
+  h+=`<span class="row" style="gap:5px"><span style="width:2px;height:12px;background:var(--psu-2);display:inline-block"></span>${isFY()?'ขึ้นปีงบใหม่ (ต.ค.)':'ขึ้นปีใหม่ (ม.ค.)'}</span>`;
   h+='</div>';
   $('hm-box').innerHTML=h;
 }
@@ -1563,14 +1635,14 @@ async function exportXLSX(type){
   const wb=new ExcelJS.Workbook(); wb.creator='ติดตามค่าน้ำค่าไฟฟ้า';
   const U=type==='elec'?'kWh':'ลบ.ม.';
   const ws=wb.addWorksheet(type==='elec'?'ค่าไฟฟ้า':'ค่าน้ำ');
-  ws.columns=[{header:'ปี',key:'y',width:8},{header:'เดือน',key:'m',width:12},
+  ws.columns=[{header:isFY()?'ปีงบ':'ปี',key:'fy',width:9},{header:'ปีปฏิทิน',key:'y',width:10},{header:'เดือน',key:'m',width:12},
     {header:`หน่วยรวม (${U})`,key:'tu',width:16},{header:'ยอดรวม (บาท)',key:'tc',width:16},
     {header:`หน่วย B+1+2 (${U})`,key:'hu',width:18},{header:'สัดส่วน',key:'p',width:10},
     {header:'โรงพยาบาล (บาท)',key:'hc',width:18},{header:'คณะ (บาท)',key:'fc',width:16}];
   ws.getRow(1).eachCell(c=>{c.font={bold:true,color:{argb:'FFFFFFFF'}};
     c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF002E6D'}};c.alignment={horizontal:'center'};});
   computedMonths(type).forEach(c=>{
-    const r=ws.addRow({y:c.y,m:MFL[c.m-1],tu:c.totalUnit,tc:c.totalCost,hu:c.hospUnit,
+    const r=ws.addRow({fy:yrOf(c.y,c.m),y:c.y,m:MFL[c.m-1],tu:c.totalUnit,tc:c.totalCost,hu:c.hospUnit,
       p:c.pct!=null?c.pct:null,hc:c.hospCost,fc:c.facCost});
     ['tu','tc','hu','hc','fc'].forEach(k=>r.getCell(k).numFmt='#,##0.00');
     r.getCell('p').numFmt='0.00%';
@@ -1578,7 +1650,7 @@ async function exportXLSX(type){
   ws.views=[{state:'frozen',ySplit:1}];
   const buf=await wb.xlsx.writeBuffer();
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf]));
-  a.download=`รายงาน${type==='elec'?'ค่าไฟฟ้า':'ค่าน้ำ'}_${new Date().toISOString().slice(0,10)}.xlsx`; a.click();
+  a.download=`รายงาน${type==='elec'?'ค่าไฟฟ้า':'ค่าน้ำ'}_${isFY()?'ปีงบ':'ปีปฏิทิน'}_${new Date().toISOString().slice(0,10)}.xlsx`; a.click();
 }
 
 /* =======================================================================
@@ -1613,8 +1685,9 @@ function shopMonths(){
   return k.map(x=>[Math.floor(x/100),x%100]);
 }
 function shopYears(){
-  const ys=[...new Set(shopMonths().map(x=>x[0]))].sort();
-  return ys.length?ys:[new Date().getFullYear()+543];
+  const ys=[...new Set(shopMonths().map(([y,m])=>yrOf(y,m)))].sort((a,b)=>a-b);
+  if(ys.length) return ys;
+  const d=new Date(); return [yrOf(d.getFullYear()+543,d.getMonth()+1)];
 }
 
 let shopReady=false;
@@ -1750,12 +1823,14 @@ async function shopSave(auto){
 function shopClear(){ activeShops().forEach(s=>['sec','swc','seu','swu'].forEach(k=>$(k+'-'+s.id).value='')); shopCalc(1); }
 
 function renderSRep(){
+  paintYtg();
   const mode=$('sr-mode').value;
   $('sr-mo').style.display = mode==='month'?'':'none';
-  if(!$('sr-mo').innerHTML) monthSel($('sr-mo'));
+  moSel($('sr-mo'));
   const ys=shopYears(); const el=$('sr-yr');
-  const cur=+el.value||ys[ys.length-1];
-  el.innerHTML=ys.map(y=>`<option value="${y}"${y===cur?' selected':''}>ปี ${y}</option>`).join('');
+  let cur=+el.value||ys[ys.length-1];
+  if(!ys.includes(cur)) cur=ys[ys.length-1];
+  el.innerHTML=ys.map(y=>`<option value="${y}"${y===cur?' selected':''}>${yrLbl(y)}</option>`).join('');
   const y=+el.value;
   const L=activeShops();
   const t1=+S.settings.shop_t1||150,t2=+S.settings.shop_t2||500;
@@ -1767,11 +1842,12 @@ function renderSRep(){
     <span class="tag ${S.settings.shop_rate_mode==='tier'?'t-w':'t-i'}">${S.settings.shop_rate_mode==='tier'?'คิดแบบขั้นบันได':'คิดอัตราเดียวตามช่วง'}</span></div>`;
 
   if(mode==='month'){
-    const m=+$('sr-mo').value||1;
-    const rs=L.map(s=>({s,r:shopRow(y,m,s.id)}));
+    const m=+$('sr-mo').value||monthOrder()[0];
+    const cy=calYear(y,m);          // ปีงบ 2569 + ต.ค. = ข้อมูลเดือน ต.ค. 2568
+    const rs=L.map(s=>({s,r:shopRow(cy,m,s.id)}));
     const te=rs.reduce((a,x)=>a+(x.r?n(x.r.elec_cost)||0:0),0);
     const tw=rs.reduce((a,x)=>a+(x.r?n(x.r.water_cost)||0:0),0);
-    kpiShop(te,tw,`${MFL[m-1]} ${y}`,null);
+    kpiShop(te,tw,`${MFL[m-1]} ${cy}`,null);
     $('sr-tbl').innerHTML=`<table><thead><tr><th>ร้าน</th><th class="num">ไฟ ก่อน→หลัง</th><th class="num">หน่วยไฟ</th><th class="num">ค่าไฟ</th>
       <th class="num">น้ำ ก่อน→หลัง</th><th class="num">หน่วยน้ำ</th><th class="num">ค่าน้ำ</th><th class="num">รวม</th></tr></thead><tbody>
       ${rs.map(({s,r})=>r?`<tr><td><b>${esc(s.name)}</b> <span class="muted" style="font-size:11px">${esc(s.code||'')}</span></td>
@@ -1787,17 +1863,19 @@ function renderSRep(){
     return;
   }
   // ---- รายปี ----
-  const mt=Array.from({length:12},(_,i)=>({m:i+1,e:0,w:0,n:0}));
-  L.forEach(s=>MN.forEach((_,i)=>{ const r=shopRow(y,i+1,s.id);
+  const cells=yearCells(y);        // [ปีปฏิทิน, เดือน] 12 ช่อง เรียงตามโหมด
+  const mt=cells.map(([cy,m])=>({cy,m,e:0,w:0,n:0}));
+  L.forEach(s=>cells.forEach(([cy,m],i)=>{ const r=shopRow(cy,m,s.id);
     if(r){ mt[i].e+=n(r.elec_cost)||0; mt[i].w+=n(r.water_cost)||0; mt[i].n++; } }));
   const te=mt.reduce((a,x)=>a+x.e,0), tw=mt.reduce((a,x)=>a+x.w,0);
   const nMon=mt.filter(x=>x.n).length;
-  kpiShop(te,tw,`ทั้งปี ${y}`, nMon?r2((te+tw)/nMon):0);
-  const cellsHead=mt.map(x=>`<th class="num" style="min-width:76px">${MN[x.m-1]}<div style="font-weight:400;font-size:10px;color:var(--t3)">${x.n?fmt(x.e+x.w):'—'}</div></th>`).join('');
-  $('sr-tbl').innerHTML=`<table><thead><tr><th style="min-width:150px">ร้าน</th>${cellsHead}<th class="num" style="min-width:90px">รวมทั้งปี</th></tr></thead><tbody>
+  kpiShop(te,tw,`ทั้ง${yrLbl(y)}`, nMon?r2((te+tw)/nMon):0);
+  const cellsHead=mt.map(x=>`<th class="num" style="min-width:76px">${mLbl(x.cy,x.m)}<div style="font-weight:400;font-size:10px;color:var(--t3)">${x.n?fmt(x.e+x.w):'—'}</div></th>`).join('');
+  $('sr-tbl').innerHTML=`<div class="hint" style="padding:0 2px 8px">${yrLbl(y)} = ${yrRange(y)}</div>
+    <table><thead><tr><th style="min-width:150px">ร้าน</th>${cellsHead}<th class="num" style="min-width:90px">รวมทั้ง${isFY()?'ปีงบ':'ปี'}</th></tr></thead><tbody>
     ${L.map(s=>{
       let se=0,sw=0;
-      const tds=MN.map((_,i)=>{ const r=shopRow(y,i+1,s.id);
+      const tds=cells.map(([cy,m])=>{ const r=shopRow(cy,m,s.id);
         if(!r) return '<td class="num muted">—</td>';
         const e=n(r.elec_cost)||0, w=n(r.water_cost)||0; se+=e; sw+=w;
         return `<td class="num"><div style="color:var(--gold-d);font-weight:700">${fmt(e)}</div>${w?`<div style="color:#0E7490;font-size:11px">${fmt(w)}</div>`:''}</td>`;
@@ -1830,20 +1908,21 @@ async function saveShopRates(){
 }
 async function exportShopXLSX(){
   const y=+$('sr-yr').value, L=activeShops();
-  const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('ร้านเช่า '+y);
-  ws.columns=[{header:'ร้าน',key:'s',width:30},{header:'รหัส',key:'c',width:10},{header:'ปี',key:'y',width:8},
+  const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('ร้านเช่า '+yrLbl(y));
+  ws.columns=[{header:'ร้าน',key:'s',width:30},{header:'รหัส',key:'c',width:10},
+    {header:isFY()?'ปีงบ':'ปี',key:'fy',width:9},{header:'ปีปฏิทิน',key:'y',width:10},
     {header:'เดือน',key:'m',width:12},{header:'หน่วยไฟ',key:'eu',width:12},{header:'ค่าไฟ',key:'ec',width:14},
     {header:'หน่วยน้ำ',key:'wu',width:12},{header:'ค่าน้ำ',key:'wc',width:14},{header:'รวม',key:'t',width:14}];
   ws.getRow(1).eachCell(c=>{c.font={bold:true,color:{argb:'FFFFFFFF'}};
     c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF8A6010'}};c.alignment={horizontal:'center'};});
-  L.forEach(s=>MN.forEach((_,i)=>{ const r=shopRow(y,i+1,s.id); if(!r) return;
-    const row=ws.addRow({s:s.name,c:s.code,y,m:MFL[i],eu:n(r.elec_unit),ec:n(r.elec_cost),
+  L.forEach(s=>yearCells(y).forEach(([cy,m])=>{ const r=shopRow(cy,m,s.id); if(!r) return;
+    const row=ws.addRow({s:s.name,c:s.code,fy:y,y:cy,m:MFL[m-1],eu:n(r.elec_unit),ec:n(r.elec_cost),
       wu:n(r.water_unit),wc:n(r.water_cost),t:n(r.total)});
     ['eu','ec','wu','wc','t'].forEach(k=>row.getCell(k).numFmt='#,##0.00'); }));
   ws.views=[{state:'frozen',ySplit:1}];
   const buf=await wb.xlsx.writeBuffer();
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf]));
-  a.download=`รายงานร้านเช่า_${y}.xlsx`; a.click();
+  a.download=`รายงานร้านเช่า_${isFY()?'ปีงบ':'ปี'}${y}.xlsx`; a.click();
 }
 
 /* =======================================================================
