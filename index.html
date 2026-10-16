@@ -149,7 +149,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       <div class="sb-logo">💧⚡</div>
       <div>
         <div class="sb-name">ติดตามค่าน้ำค่าไฟฟ้า</div>
-        <div class="sb-sub">v4.0 · อาคารคณะการแพทย์แผนไทย</div>
+        <div class="sb-sub" id="ver-side">อาคารคณะการแพทย์แผนไทย</div>
       </div>
     </div>
   </div>
@@ -189,6 +189,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 
     <!-- ======== ELEC ENTRY ======== -->
     <div class="page" id="p-elec">
+      <div id="e-qa"></div>
       <div class="card">
         <div class="ch"><div><div class="ct">1️⃣ บิลจากมหาวิทยาลัย</div><div class="cs">หน่วยรวมและยอดเงินรวมทั้งอาคาร — ใช้เป็นตัวตั้งในการแบ่งสัดส่วน</div></div></div>
         <div class="g3">
@@ -197,17 +198,17 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
           <div class="fg"><label>สถานะ</label><div id="e-status" style="padding-top:7px"></div></div>
         </div>
         <div class="g2">
-          <div class="fg"><label>หน่วยไฟฟ้ารวม (kWh)</label><input type="number" id="e-tu" step="0.01" min="0" placeholder="เช่น 27568" oninput="elecCalc()"></div>
-          <div class="fg"><label>ค่าไฟฟ้ารวม (บาท)</label><input type="number" id="e-tc" step="0.01" min="0" placeholder="เช่น 137840" oninput="elecCalc()"></div>
+          <div class="fg"><label>หน่วยไฟฟ้ารวม (kWh)</label><input type="number" id="e-tu" step="0.01" min="0" placeholder="เช่น 27568" oninput="elecCalc();queueAutoSave('elec')"></div>
+          <div class="fg"><label>ค่าไฟฟ้ารวม (บาท)</label><input type="number" id="e-tc" step="0.01" min="0" placeholder="เช่น 137840" oninput="elecCalc();queueAutoSave('elec')"></div>
         </div>
         <div class="hint" id="e-rate"></div>
         <details style="margin-top:10px">
           <summary style="cursor:pointer;font-size:12.5px;color:var(--t2)">แยกรายมิเตอร์ในบิล (ไม่บังคับ)</summary>
           <div class="g4" style="margin-top:10px">
-            <div class="fg"><label>มิเตอร์ 1</label><input type="number" id="e-m1" step="0.01" oninput="elecCalc()"></div>
-            <div class="fg"><label>มิเตอร์ 2</label><input type="number" id="e-m2" step="0.01" oninput="elecCalc()"></div>
-            <div class="fg"><label>มิเตอร์ 3</label><input type="number" id="e-m3" step="0.01" oninput="elecCalc()"></div>
-            <div class="fg"><label>มิเตอร์ 4</label><input type="number" id="e-m4" step="0.01" oninput="elecCalc()"></div>
+            <div class="fg"><label>มิเตอร์ 1</label><input type="number" id="e-m1" step="0.01" oninput="elecCalc();queueAutoSave('elec')"></div>
+            <div class="fg"><label>มิเตอร์ 2</label><input type="number" id="e-m2" step="0.01" oninput="elecCalc();queueAutoSave('elec')"></div>
+            <div class="fg"><label>มิเตอร์ 3</label><input type="number" id="e-m3" step="0.01" oninput="elecCalc();queueAutoSave('elec')"></div>
+            <div class="fg"><label>มิเตอร์ 4</label><input type="number" id="e-m4" step="0.01" oninput="elecCalc();queueAutoSave('elec')"></div>
           </div>
           <div class="hint" id="e-msum"></div>
         </details>
@@ -229,12 +230,14 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       <div class="row mt">
         <button class="btn btn-p" id="e-save" onclick="elecSave()">✓ บันทึก</button>
         <button class="btn btn-x" onclick="elecClear()">✕ ล้างช่องกรอก</button>
+        <span id="e-auto" style="font-size:12px;color:var(--t3)"></span>
       </div>
       <div id="e-msg" class="mt"></div>
     </div>
 
     <!-- ======== WATER ENTRY ======== -->
     <div class="page" id="p-water">
+      <div id="w-qa"></div>
       <div class="card">
         <div class="ch"><div><div class="ct">1️⃣ บิลค่าน้ำ (ถ้ามี)</div><div class="cs">ถ้าไม่กรอก ระบบจะใช้ผลรวมมิเตอร์ย่อยทั้งหมดเป็นตัวตั้ง และคิดเงินจากอัตราต่อหน่วย</div></div></div>
         <div class="g3">
@@ -243,9 +246,9 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
           <div class="fg"><label>สถานะ</label><div id="w-status" style="padding-top:7px"></div></div>
         </div>
         <div class="g3">
-          <div class="fg"><label>หน่วยน้ำรวม (ลบ.ม.)</label><input type="number" id="w-tu" step="0.01" min="0" placeholder="ว่างได้" oninput="waterCalc()"></div>
-          <div class="fg"><label>ค่าน้ำรวม (บาท)</label><input type="number" id="w-tc" step="0.01" min="0" placeholder="ว่างได้" oninput="waterCalc()"></div>
-          <div class="fg"><label>อัตรา (บาท/ลบ.ม.)</label><input type="number" id="w-rate" step="0.0001" min="0" oninput="waterCalc()"></div>
+          <div class="fg"><label>หน่วยน้ำรวม (ลบ.ม.)</label><input type="number" id="w-tu" step="0.01" min="0" placeholder="ว่างได้" oninput="waterCalc();queueAutoSave('water')"></div>
+          <div class="fg"><label>ค่าน้ำรวม (บาท)</label><input type="number" id="w-tc" step="0.01" min="0" placeholder="ว่างได้" oninput="waterCalc();queueAutoSave('water')"></div>
+          <div class="fg"><label>อัตรา (บาท/ลบ.ม.)</label><input type="number" id="w-rate" step="0.0001" min="0" oninput="waterCalc();queueAutoSave('water')"></div>
         </div>
         <div class="hint" id="w-rate-hint"></div>
       </div>
@@ -266,6 +269,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       <div class="row mt">
         <button class="btn btn-p" id="w-save" onclick="waterSave()">✓ บันทึก</button>
         <button class="btn btn-x" onclick="waterClear()">✕ ล้างช่องกรอก</button>
+        <span id="w-auto" style="font-size:12px;color:var(--t3)"></span>
       </div>
       <div id="w-msg" class="mt"></div>
     </div>
@@ -349,7 +353,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
           <th class="num">น้ำ ก่อน</th><th class="num" style="color:#0E7490">น้ำ ปัจจุบัน</th><th class="num">หน่วยน้ำ</th><th class="num">ค่าน้ำ</th>
           <th class="num">รวม</th></tr></thead><tbody id="sh-rows"></tbody></table></div>
         <div class="row mt"><button class="btn btn-p" id="sh-save" onclick="shopSave()">✓ บันทึกทุกร้าน</button>
-          <button class="btn btn-x" onclick="shopClear()">✕ ล้างช่องกรอก</button></div>
+          <button class="btn btn-x" onclick="shopClear()">✕ ล้างช่องกรอก</button>
+          <span id="sh-auto" style="font-size:12px;color:var(--t3)"></span></div>
         <div id="sh-msg" class="mt"></div>
       </div>
     </div>
@@ -377,6 +382,13 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
     <!-- ======== SETTINGS ======== -->
     <div class="page" id="p-set">
       <div class="card">
+        <div class="ch"><div><div class="ct">เวอร์ชันโปรแกรม</div>
+          <div class="cs">ถ้าแก้ไฟล์แล้วโปรแกรมยังทำงานแบบเดิม ให้ดูว่าเลขนี้ตรงกับไฟล์ที่เพิ่งเอาขึ้นหรือไม่</div></div></div>
+        <div class="row"><span class="tag t-i" style="font-size:14px;padding:6px 14px" id="ver-box"></span>
+          <button class="btn btn-s" onclick="hardReload()">♻️ โหลดไฟล์ใหม่ (ล้างแคชเบราว์เซอร์)</button></div>
+        <div class="hint">ถ้ากดแล้วเลขเวอร์ชันไม่เปลี่ยน แปลว่ายังไม่ได้เอาไฟล์ใหม่ขึ้นไปแทนที่</div>
+      </div>
+      <div class="card">
         <div class="ch"><div><div class="ct">การเชื่อมต่อ Google Sheets</div></div></div>
         <div class="fg"><label>Apps Script Web App URL</label><input type="text" id="s-api" placeholder="https://script.google.com/macros/s/.../exec"></div>
         <div class="row"><button class="btn btn-p btn-s" onclick="saveApi()">บันทึก URL</button>
@@ -390,6 +402,10 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
           <div class="fg"><label>อัตราค่าน้ำตั้งต้น (บาท/ลบ.ม.)</label><input type="number" id="s-wrate" step="0.0001"></div>
           <div class="fg"><label>จำนวนชั้นโซนโรงพยาบาล</label><input type="number" id="s-hf" min="1"></div>
           <div class="fg"><label>จำนวนชั้นโซนคณะ</label><input type="number" id="s-ff" min="1"></div>
+          <div class="fg"><label>บันทึกอัตโนมัติ</label><select id="s-auto">
+            <option value="1">เปิด — พิมพ์แล้วบันทึกให้เองใน 1 วินาที</option>
+            <option value="0">ปิด — ต้องกดปุ่มบันทึกเอง</option></select>
+            <div class="hint">เปิดไว้จะทำให้เดือนถัดไปและหน้าตรวจคุณภาพอัปเดตตามทันทีโดยไม่ต้องกดอะไร</div></div>
         </div>
         <button class="btn btn-p btn-s" onclick="saveSet()">บันทึก</button>
         <span id="s-msg" style="margin-left:10px;font-size:12.5px"></span>
@@ -440,6 +456,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
+const APP_VERSION = 'v4.5';
+const APP_BUILD   = '2026-10-16 09:10';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const C = { psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' };
@@ -471,7 +489,7 @@ const DEFAULT_METERS = [
 
 const DEFAULT_SETTINGS = {
   org:'คณะการแพทย์แผนไทย มหาวิทยาลัยสงขลานครินทร์',
-  water_rate:24, hospital_floors:3, faculty_floors:5,
+  water_rate:24, hospital_floors:3, faculty_floors:5, autosave:true,
   // อัตราค่าไฟร้านเช่าแบบขั้นบันได
   shop_t1:150, shop_t2:500, shop_r1:5, shop_r2:6, shop_r3:7, shop_water_rate:24, shop_rate_mode:'flat'
 };
@@ -509,18 +527,23 @@ function meterRow(type,y,m,mid){
 /** เลขต้นเดือน = เลขปลายเดือนก่อนเสมอ (ถ้ามีเดือนก่อนในระบบ)
  *  แก้เดือนก่อนแล้วเดือนถัดไปจะตามทันทีโดยไม่ต้องกรอกใหม่
  *  เดือนแรกสุดที่ไม่มีเดือนก่อน จึงใช้ค่าตั้งต้นที่บันทึกไว้ในแถวนั้นเอง */
+function chainBack(type,y,m,mid){
+  // เดินถอยหลังหาเดือนล่าสุดที่มีเลขมิเตอร์จริง ข้ามเดือนที่ยังไม่ได้กรอก (ย้อนได้ 36 เดือน)
+  let yy=y, mm=m;
+  for(let i=0;i<36;i++){
+    [yy,mm]=prevYM(yy,mm);
+    const r=meterRow(type,yy,mm,mid);
+    if(r && n(r.curr_raw)!=null) return {v:n(r.curr_raw),y:yy,m:mm,gap:i};
+  }
+  return null;
+}
 function chainPrev(type,y,m,mid){
-  const [py,pm]=prevYM(y,m);
-  const pr=meterRow(type,py,pm,mid);
-  if(pr && n(pr.curr_raw)!=null) return n(pr.curr_raw);
-  const cr=meterRow(type,y,m,mid);
+  const b=chainBack(type,y,m,mid);
+  if(b) return b.v;
+  const cr=meterRow(type,y,m,mid);          // เดือนแรกสุด ใช้ค่าตั้งต้นที่บันทึกไว้
   return cr ? n(cr.prev_raw) : null;
 }
-function hasPrevRow(type,y,m,mid){
-  const [py,pm]=prevYM(y,m);
-  const pr=meterRow(type,py,pm,mid);
-  return !!(pr && n(pr.curr_raw)!=null);
-}
+function hasPrevRow(type,y,m,mid){ return !!chainBack(type,y,m,mid); }
 /** หน่วยที่ใช้ — คำนวณสดจากลูกโซ่เสมอ ไม่เชื่อค่าที่เก็บไว้ (กันค่าค้างเมื่อแก้ย้อนหลัง) */
 function usedOf(type,y,m,mc){
   const cr=meterRow(type,y,m,mc.id);
@@ -609,6 +632,9 @@ function qualityIssues(type){
       const dp=(+mc.multiplier||1)>1?4:0;   // หน้าปัด MWh แสดง 4 ตำแหน่ง มิเตอร์น้ำเป็นจำนวนเต็ม
       if(prev!=null&&curr!=null&&curr<prev)
         out.push({type,lbl,y:x.y,m:x.m,mc,sev:'bad',what:'เลขมิเตอร์ถอยหลัง',detail:`เดือนก่อน ${fmt(prev,dp)} → ปัจจุบัน ${fmt(curr,dp)}`});
+      const bk=chainBack(type,x.y,x.m,mc.id);
+      if(bk&&bk.gap>0)
+        out.push({type,lbl,y:x.y,m:x.m,mc,sev:'warn',what:'ข้ามเดือน',detail:`เดือนก่อนที่มีเลขคือ ${MN[bk.m-1]} ${bk.y} — หน่วยที่คิดได้รวม ${bk.gap+1} เดือน`});
       if(used!=null&&med&&med>0&&used>med*4)
         out.push({type,lbl,y:x.y,m:x.m,mc,sev:'warn',what:'หน่วยสูงผิดปกติ',detail:`ใช้ ${fmt(used,dp?1:0)} ขณะที่ปกติราว ${fmt(med,dp?1:0)}`});
     });
@@ -765,6 +791,54 @@ function curPage(){ const e=document.querySelector('.page.on'); return e?e.id.sl
 function sbToggle(){ const s=$('sb'); s.classList.toggle('on'); $('sbd').style.display=s.classList.contains('on')?'block':'none'; }
 function sbClose(){ $('sb').classList.remove('on'); $('sbd').style.display='none'; }
 function refresh(){ render(curPage()); badges(); }
+
+/* ===== ข้อมูลเปลี่ยนเมื่อไหร่ อัปเดตทุกหน้าทันที ===== */
+function dataChanged(){
+  saveCache(); badges();
+  const p=curPage();
+  // หน้าอ่านอย่างเดียว เรนเดอร์ใหม่ได้เลย
+  if(['dash','erep','wrep','ana','heat','qa','srep'].includes(p)) render(p);
+  // หน้ากรอกข้อมูล อัปเดตแถบตรวจคุณภาพโดยไม่ไปยุ่งกับช่องที่กำลังพิมพ์
+  if(p==='elec')  renderEntryQA('elec');
+  if(p==='water') renderEntryQA('water');
+}
+/** แถบตรวจคุณภาพของเดือนที่กำลังกรอก + เดือนถัดไป (เพราะแก้เดือนนี้กระทบเดือนหน้า) */
+function renderEntryQA(type){
+  const el=$(type==='elec'?'e-qa':'w-qa'); if(!el) return;
+  const y=+$(type==='elec'?'e-y':'w-y').value, m=+$(type==='elec'?'e-m':'w-m').value;
+  if(!y||!m){ el.innerHTML=''; return; }
+  const [ny,nm]=(m===12)?[y+1,1]:[y,m+1];
+  const all=qualityIssues(type);
+  const here=all.filter(x=>x.y===y&&x.m===m);
+  const next=all.filter(x=>x.y===ny&&x.m===nm);
+  if(!here.length&&!next.length){
+    el.innerHTML=`<div class="al al-s" style="margin:0 0 14px"><span class="al-ic">✓</span><div>ตรวจคุณภาพผ่าน — เดือนนี้และเดือนถัดไปไม่มีจุดผิดปกติ</div></div>`;
+    return;
+  }
+  const li=x=>`<div style="padding:3px 0"><span class="tag ${x.sev==='bad'?'t-b':'t-w'}">${esc(x.what)}</span>
+    <code>${esc(x.mc.code)}</code> ชั้น ${esc(x.mc.floor)} — ${esc(x.detail)}</div>`;
+  el.innerHTML=`<div class="al ${here.some(x=>x.sev==='bad')||next.some(x=>x.sev==='bad')?'al-b':'al-w'}" style="margin:0 0 14px;align-items:flex-start">
+    <span class="al-ic">🔍</span><div style="flex:1">
+      ${here.length?`<b>เดือนนี้ (${MFL[m-1]} ${y}) มี ${here.length} จุด</b>${here.map(li).join('')}`:''}
+      ${next.length?`<div style="margin-top:${here.length?'8px':'0'}"><b>เดือนถัดไป (${MFL[nm-1]} ${ny}) มี ${next.length} จุด</b>${next.map(li).join('')}</div>`:''}
+    </div></div>`;
+}
+
+/* ===== บันทึกอัตโนมัติ ===== */
+let _autoT=null, _autoType=null;
+const autoOn = () => S.settings.autosave!==false && S.settings.autosave!=='false';
+function queueAutoSave(type){
+  if(!autoOn()) return;
+  _autoType=type;
+  setAutoStatus(type,'<span class="muted">กำลังจะบันทึก…</span>');
+  clearTimeout(_autoT);
+  _autoT=setTimeout(()=>{ (type==='elec'?elecSave:type==='water'?waterSave:shopSave)(true); },1500);
+}
+function setAutoStatus(type,html){
+  const el=$(type==='elec'?'e-auto':type==='water'?'w-auto':'sh-auto');
+  if(el) el.innerHTML=html;
+}
+function autoStamp(){ const d=new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; }
 function render(id){
   if(id==='dash') renderDash();
   if(id==='elec'){ elecInit(); }
@@ -814,7 +888,7 @@ function elecBuildRows(){
     <td><span class="fl${mc.zone==='faculty'?' fac':''}">${esc(mc.floor)}</span></td>
     <td style="font-size:12.5px">${esc(mc.name||mc.code)}<div class="muted" style="font-size:11px">${esc(mc.unit)}</div></td>
     <td class="num"><input class="mi mi-p" type="number" step="0.0001" id="ep-${mc.id}" readonly tabindex="-1" placeholder="—"></td>
-    <td class="num"><input class="mi" type="number" step="0.0001" id="ec-${mc.id}" placeholder="0" oninput="elecCalc()"></td>
+    <td class="num"><input class="mi" type="number" step="0.0001" id="ec-${mc.id}" placeholder="0" oninput="elecCalc();queueAutoSave('elec')"></td>
     <td class="num" id="eu-${mc.id}">—</td>
     <td id="ew-${mc.id}"></td></tr>`).join('')
     || `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">ยังไม่มีมิเตอร์ไฟฟ้า</td></tr>`;
@@ -843,7 +917,8 @@ function elecLoad(){
     ? '<span class="tag t-ok">✓ มีข้อมูลแล้ว — แก้ไขได้</span>'
     : '<span class="tag t-n">เดือนใหม่</span>';
   $('e-msg').innerHTML='';
-  elecCalc();
+  setAutoStatus('elec','');
+  elecCalc(); renderEntryQA('elec');
 }
 function elecCalc(){
   const y=+$('e-y').value, m=+$('e-m').value;
@@ -896,14 +971,21 @@ function renderSplit(elId,o){
       <div class="kpi-s">${unitLabel} · กรอกมิเตอร์แล้ว ${got}/${nAll} ตัว</div></div>
   </div>`;
 }
-async function elecSave(){
+async function elecSave(auto){
+  clearTimeout(_autoT);
   const y=+$('e-y').value, m=+$('e-m').value;
-  if(!y||!m) return toast('เลือกปีและเดือนก่อน');
+  if(!y||!m){ if(!auto) toast('เลือกปีและเดือนก่อน'); return; }
   const cfg=meters('elec');
   const rows=[]; let any=false;
   cfg.forEach(mc=>{
     const cv=n($('ec-'+mc.id).value);
-    if(cv==null) return;
+    const exist=meterRow('elec',y,m,mc.id);
+    if(cv==null){
+      // เคลียร์ช่องทิ้ง = ต้องการลบค่าเดือนนี้ ต้องเขียนทับให้ว่างจริง ไม่ใช่ข้ามไป
+      if(exist && n(exist.curr_raw)!=null)
+        rows.push({...exist, prev_raw:null, curr_raw:null, used_unit:null});
+      return;
+    }
     any=true;
     const pv = hasPrevRow('elec',y,m,mc.id) ? chainPrev('elec',y,m,mc.id) : n($('ep-'+mc.id).value);
     const used = (pv!=null&&cv>=pv) ? r2((cv-pv)*(+mc.multiplier||1)) : null;
@@ -916,9 +998,11 @@ async function elecSave(){
   const bill={ id: exB?exB.id:uid('eb_'), year:y, month:m, total_unit:tu, total_cost:tc,
     m1:n($('e-m1').value), m2:n($('e-m2').value), m3:n($('e-m3').value), m4:n($('e-m4').value),
     remark:$('e-note').value||'' };
-  if(!any && tu==null && tc==null) return toast('ยังไม่มีอะไรให้บันทึก');
+  if(!any && tu==null && tc==null && !rows.length){ if(!auto) toast('ยังไม่มีอะไรให้บันทึก'); return; }
 
-  const btn=$('e-save'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…';
+  const btn=$('e-save');
+  if(auto) setAutoStatus('elec','<span class="spin"></span> กำลังบันทึก…');
+  else { btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…'; }
   // local
   upsertLocal(S.elec_bill,bill,['year','month']);
   rows.forEach(r=>upsertLocal(S.elec_meter,r,['year','month','meter_id']));
@@ -927,12 +1011,19 @@ async function elecSave(){
   const r1=await saveSheet('elec_bill',[bill]); if(!r1.ok){ok=false;err=r1.error;}
   if(rows.length){ const r2_=await saveSheet('elec_meter',rows); if(!r2_.ok){ok=false;err=r2_.error;} }
   const fixed=await refreshNext('elec',y,m);
-  btn.disabled=false; btn.innerHTML='✓ บันทึก';
-  elecLoad(); badges();
-  if(fixed) toast(`คิดหน่วยเดือนถัดไปใหม่ให้แล้ว ${fixed} มิเตอร์`);
-  $('e-msg').innerHTML = ok
-    ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · มิเตอร์ ${rows.length} ตัว</div></div>`
-    : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว กดปุ่มส้มมุมซ้ายล่างเพื่อส่งซ้ำ<br><span style="font-size:11.5px">${esc(err)}</span></div></div>`;
+  if(auto){
+    setAutoStatus('elec', ok
+      ? `<span style="color:var(--ok)">✓ บันทึกอัตโนมัติแล้ว ${autoStamp()}${fixed?` · อัปเดตเดือนถัดไป ${fixed} มิเตอร์`:''}</span>`
+      : `<span style="color:var(--bad)">⚠ ยังไม่ขึ้น Sheet — เข้าคิวค้างส่งแล้ว</span>`);
+  } else {
+    btn.disabled=false; btn.innerHTML='✓ บันทึก';
+    elecLoad();
+    setAutoStatus('elec','');
+    $('e-msg').innerHTML = ok
+      ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · มิเตอร์ ${rows.length} ตัว${fixed?` · คิดหน่วยเดือนถัดไปใหม่ให้ ${fixed} มิเตอร์`:''}</div></div>`
+      : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว กดปุ่มส้มมุมซ้ายล่างเพื่อส่งซ้ำ<br><span style="font-size:11.5px">${esc(err)}</span></div></div>`;
+  }
+  dataChanged();
 }
 function elecClear(){ meters('elec').forEach(mc=>$('ec-'+mc.id).value=''); ['e-tu','e-tc','e-m1','e-m2','e-m3','e-m4','e-note'].forEach(i=>$(i).value=''); elecCalc(); }
 function upsertLocal(list,rec,keys){
@@ -963,7 +1054,7 @@ function waterBuildRows(){
       <td>${same?'':`<span class="fl${mc.zone==='faculty'?' fac':''}">${esc(mc.floor)}</span>`}</td>
       <td style="font-size:12.5px"><code>${esc(mc.code)}</code>${mc.name?' '+esc(mc.name):''}</td>
       <td class="num"><input class="mi mi-p" type="number" step="0.01" id="wp-${mc.id}" readonly tabindex="-1" placeholder="—"></td>
-      <td class="num"><input class="mi" type="number" step="0.01" id="wc-${mc.id}" placeholder="0" oninput="waterCalc()"></td>
+      <td class="num"><input class="mi" type="number" step="0.01" id="wc-${mc.id}" placeholder="0" oninput="waterCalc();queueAutoSave('water')"></td>
       <td class="num" id="wu-${mc.id}">—</td><td id="ww-${mc.id}"></td></tr>`;
   });
   $('w-rows').innerHTML = html || `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">ยังไม่มีมิเตอร์น้ำ</td></tr>`;
@@ -988,7 +1079,8 @@ function waterLoad(){
   const has=meters('water').some(mc=>meterRow('water',y,m,mc.id));
   $('w-status').innerHTML=(b||has)?'<span class="tag t-ok">✓ มีข้อมูลแล้ว — แก้ไขได้</span>':'<span class="tag t-n">เดือนใหม่</span>';
   $('w-msg').innerHTML='';
-  waterCalc();
+  setAutoStatus('water','');
+  waterCalc(); renderEntryQA('water');
 }
 function waterCalc(){
   const cfg=meters('water');
@@ -1011,14 +1103,20 @@ function waterCalc(){
   renderSplit('w-calc',{hospUnit:r2(hosp),totalUnit:tu,totalCost:tc,got,nAll:cfg.length,
     hf:+S.settings.hospital_floors||3, ff:+S.settings.faculty_floors||5, unitLabel:'ลบ.ม.'});
 }
-async function waterSave(){
+async function waterSave(auto){
+  clearTimeout(_autoT);
   const y=+$('w-y').value, m=+$('w-m').value;
-  if(!y||!m) return toast('เลือกปีและเดือนก่อน');
+  if(!y||!m){ if(!auto) toast('เลือกปีและเดือนก่อน'); return; }
   const cfg=meters('water');
   const rows=[]; let any=false, sub=0;
   cfg.forEach(mc=>{
     const cv=n($('wc-'+mc.id).value);
-    if(cv==null) return;
+    const exist=meterRow('water',y,m,mc.id);
+    if(cv==null){
+      if(exist && n(exist.curr_raw)!=null)
+        rows.push({...exist, prev_raw:null, curr_raw:null, used_unit:null});
+      return;
+    }
     any=true;
     const pv = hasPrevRow('water',y,m,mc.id) ? chainPrev('water',y,m,mc.id) : n($('wp-'+mc.id).value);
     const used=(pv!=null&&cv>=pv)?r2((cv-pv)*(+mc.multiplier||1)):null;
@@ -1034,9 +1132,11 @@ async function waterSave(){
     total_unit: tu!=null?tu:(sub>0?r2(sub):null),
     total_cost: tc!=null?tc:(sub>0?r2(sub*rate):null),
     rate, src: (tu!=null||tc!=null)?'bill':'submeter', remark:$('w-note').value||'' };
-  if(!any && tu==null && tc==null) return toast('ยังไม่มีอะไรให้บันทึก');
+  if(!any && tu==null && tc==null && !rows.length){ if(!auto) toast('ยังไม่มีอะไรให้บันทึก'); return; }
 
-  const btn=$('w-save'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…';
+  const btn=$('w-save');
+  if(auto) setAutoStatus('water','<span class="spin"></span> กำลังบันทึก…');
+  else { btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…'; }
   upsertLocal(S.water_bill,bill,['year','month']);
   rows.forEach(r=>upsertLocal(S.water_meter,r,['year','month','meter_id']));
   if(rate!==n(S.settings.water_rate)){ S.settings.water_rate=rate; push('savesettings',S.settings); }
@@ -1045,12 +1145,19 @@ async function waterSave(){
   const a=await saveSheet('water_bill',[bill]); if(!a.ok){ok=false;err=a.error;}
   if(rows.length){ const b=await saveSheet('water_meter',rows); if(!b.ok){ok=false;err=b.error;} }
   const fixed=await refreshNext('water',y,m);
-  btn.disabled=false; btn.innerHTML='✓ บันทึก';
-  waterLoad(); badges();
-  if(fixed) toast(`คิดหน่วยเดือนถัดไปใหม่ให้แล้ว ${fixed} มิเตอร์`);
-  $('w-msg').innerHTML = ok
-    ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · มิเตอร์ ${rows.length} ตัว</div></div>`
-    : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11.5px">${esc(err)}</span></div></div>`;
+  if(auto){
+    setAutoStatus('water', ok
+      ? `<span style="color:var(--ok)">✓ บันทึกอัตโนมัติแล้ว ${autoStamp()}${fixed?` · อัปเดตเดือนถัดไป ${fixed} มิเตอร์`:''}</span>`
+      : `<span style="color:var(--bad)">⚠ ยังไม่ขึ้น Sheet — เข้าคิวค้างส่งแล้ว</span>`);
+  } else {
+    btn.disabled=false; btn.innerHTML='✓ บันทึก';
+    waterLoad();
+    setAutoStatus('water','');
+    $('w-msg').innerHTML = ok
+      ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · มิเตอร์ ${rows.length} ตัว${fixed?` · คิดหน่วยเดือนถัดไปใหม่ให้ ${fixed} มิเตอร์`:''}</div></div>`
+      : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11.5px">${esc(err)}</span></div></div>`;
+  }
+  dataChanged();
 }
 function waterClear(){ meters('water').forEach(mc=>$('wc-'+mc.id).value=''); ['w-tu','w-tc','w-note'].forEach(i=>$(i).value=''); waterCalc(); }
 
@@ -1239,8 +1346,44 @@ function renderQA(){
       <td><span class="fl${x.mc.zone==='faculty'?' fac':''}">${esc(x.mc.floor)}</span> <code>${esc(x.mc.code)}</code></td>
       <td><span class="tag ${x.sev==='bad'?'t-b':'t-w'}">${esc(x.what)}</span></td>
       <td style="font-size:12px">${esc(x.detail)}</td>
-      <td><button class="btn btn-s" onclick="jump('${x.type}',${x.y},${x.m})">ไปแก้</button></td></tr>`).join('')}
-    </tbody></table></div>`;
+      <td style="white-space:nowrap"><button class="btn btn-s" onclick="jump('${x.type}',${x.y},${x.m})">ไปแก้</button>
+        <button class="btn btn-s" onclick="showSeries('${x.type}','${x.mc.id}')">ดูทั้งสาย</button></td></tr>`).join('')}
+    </tbody></table></div>
+    <div id="qa-series" style="margin-top:14px"></div>`;
+}
+/** แสดงเลขมิเตอร์ตัวนั้นทุกเดือนเรียงกัน จะได้เห็นว่าเลขไหนผิดจริง */
+function showSeries(type,mid){
+  const mc=meters(type).find(x=>x.id===mid);
+  const box=$('qa-series'); if(!mc||!box) return;
+  const dp=(+mc.multiplier||1)>1?4:0;
+  const rows=allMonths().map(([y,m])=>{
+    const r=meterRow(type,y,m,mid);
+    return {y,m,r,prev:chainPrev(type,y,m,mid),used:usedOf(type,y,m,mc)};
+  }).filter(x=>x.r);
+  const ds=rows.map(x=>x.used).filter(v=>v!=null&&v>0).sort((a,b)=>a-b);
+  const med=ds.length?ds[Math.floor(ds.length/2)]:null;
+  box.innerHTML=`<div class="card" style="margin:0;border-color:var(--psu-2)">
+    <div class="ch"><div><div class="ct">${type==='elec'?'⚡':'💧'} มิเตอร์ <code>${esc(mc.code)}</code> ชั้น ${esc(mc.floor)} — ทุกเดือนที่มีข้อมูล</div>
+      <div class="cs">ค่ากลางของหน่วยที่ใช้ = ${med!=null?fmt(med,dp?1:0):'—'} · ตัวเลขที่ผิดมักจะเห็นชัดเมื่อเรียงแบบนี้</div></div>
+      <button class="btn btn-s btn-x" onclick="$('qa-series').innerHTML=''">✕ ปิด</button></div>
+    <div class="scroll"><table><thead><tr><th>เดือน</th><th class="num">เลขต้นเดือน</th><th class="num">เลขปลายเดือน</th>
+      <th class="num">หน่วย</th><th>สถานะ</th><th></th></tr></thead><tbody>
+      ${rows.map(x=>{
+        const curr=n(x.r.curr_raw);
+        let st='<span class="tag t-ok">ปกติ</span>';
+        if(curr==null) st='<span class="tag t-n">ว่าง</span>';
+        else if(x.prev==null) st='<span class="tag t-i">ตั้งต้น</span>';
+        else if(curr<x.prev) st='<span class="tag t-b">ถอยหลัง</span>';
+        else if(x.used!=null&&med&&x.used>med*4) st='<span class="tag t-w">สูงผิดปกติ</span>';
+        return `<tr><td style="white-space:nowrap">${MN[x.m-1]} ${x.y}</td>
+          <td class="num muted">${x.prev!=null?fmt(x.prev,dp):'—'}</td>
+          <td class="num" style="font-weight:700">${curr!=null?fmt(curr,dp):'—'}</td>
+          <td class="num">${x.used!=null?fmt(x.used,dp?1:0):'—'}</td>
+          <td>${st}</td>
+          <td><button class="btn btn-s" onclick="jump('${type}',${x.y},${x.m})">แก้</button></td></tr>`;
+      }).join('')}</tbody></table></div>
+    <div class="hint">เลขต้นเดือนดึงจากเลขปลายเดือนก่อนอัตโนมัติ ถ้าเลขต้นเดือนผิดให้ไปแก้ที่เดือนก่อนหน้า</div></div>`;
+  box.scrollIntoView&&box.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function jump(type,y,m){
   go(type==='elec'?'elec':'water');
@@ -1251,7 +1394,12 @@ function jump(type,y,m){
 /* =======================================================================
    10) SETTINGS
    ======================================================================= */
+function hardReload(){
+  // ขอไฟล์ใหม่จากเซิร์ฟเวอร์ ไม่เอาจากแคช
+  const u=new URL(location.href); u.searchParams.set('v',Date.now()); location.replace(u.toString());
+}
 function renderSet(){
+  $('ver-box').innerHTML=`${APP_VERSION} · build ${APP_BUILD}`;
   $('s-api').value=API||'';
   $('s-org').value=S.settings.org||'';
   $('s-wrate').value=n(S.settings.water_rate)??24;
@@ -1261,6 +1409,7 @@ function renderSet(){
   $('s-r1').value=+S.settings.shop_r1||5;   $('s-r2').value=+S.settings.shop_r2||6;
   $('s-r3').value=+S.settings.shop_r3||7;   $('s-swr').value=+S.settings.shop_water_rate||24;
   $('s-smode').value=S.settings.shop_rate_mode||'flat';
+  $('s-auto').value=autoOn()?'1':'0';
   renderMeterTable();
   const c={eb:S.elec_bill.length,em:S.elec_meter.length,wm:S.water_meter.length,sm:(S.shop_meter||[]).length};
   $('s-seed').innerHTML=`<div style="font-size:12.5px;line-height:1.9">
@@ -1315,6 +1464,7 @@ async function saveSet(){
   S.settings.water_rate=n($('s-wrate').value)??24;
   S.settings.hospital_floors=+$('s-hf').value||3;
   S.settings.faculty_floors=+$('s-ff').value||5;
+  S.settings.autosave=$('s-auto').value==='1';
   saveCache();
   const r=await push('savesettings',S.settings);
   $('s-msg').innerHTML=r.ok?'<span style="color:var(--ok)">✓ บันทึกแล้ว</span>':'<span style="color:var(--warn)">บันทึกในเครื่อง — เข้าคิวค้างส่ง</span>';
@@ -1512,12 +1662,12 @@ function shopBuildRows(){
   $('sh-rows').innerHTML = L.length ? L.map(s=>`<tr>
     <td style="min-width:120px"><b style="font-size:12.5px">${esc(s.name)}</b><div class="muted" style="font-size:11px">${esc(s.code||'')}</div></td>
     <td class="num"><input class="mi mi-p" type="number" step="0.01" id="sep-${s.id}" readonly tabindex="-1" placeholder="—" style="width:84px"></td>
-    <td class="num"><input class="mi" type="number" step="0.01" id="sec-${s.id}" placeholder="0" oninput="shopCalc()" style="width:84px"></td>
-    <td class="num"><input class="mi" type="number" step="0.01" id="seu-${s.id}" placeholder="—" oninput="shopCalc(1)" style="width:74px;border-color:var(--line2);font-weight:500" title="แก้เองได้ เผื่อมิเตอร์หมุนครบรอบ"></td>
+    <td class="num"><input class="mi" type="number" step="0.01" id="sec-${s.id}" placeholder="0" oninput="shopCalc();queueAutoSave('shop')" style="width:84px"></td>
+    <td class="num"><input class="mi" type="number" step="0.01" id="seu-${s.id}" placeholder="—" oninput="shopCalc(1);queueAutoSave('shop')" style="width:74px;border-color:var(--line2);font-weight:500" title="แก้เองได้ เผื่อมิเตอร์หมุนครบรอบ"></td>
     <td class="num" id="set-${s.id}" style="color:var(--gold-d);font-weight:700">—</td>
     <td class="num"><input class="mi mi-p" type="number" step="0.01" id="swp-${s.id}" readonly tabindex="-1" placeholder="—" style="width:84px"></td>
-    <td class="num"><input class="mi" type="number" step="0.01" id="swc-${s.id}" placeholder="0" oninput="shopCalc()" style="width:84px;border-color:#0E7490"></td>
-    <td class="num"><input class="mi" type="number" step="0.01" id="swu-${s.id}" placeholder="—" oninput="shopCalc(1)" style="width:74px;border-color:var(--line2);font-weight:500"></td>
+    <td class="num"><input class="mi" type="number" step="0.01" id="swc-${s.id}" placeholder="0" oninput="shopCalc();queueAutoSave('shop')" style="width:84px;border-color:#0E7490"></td>
+    <td class="num"><input class="mi" type="number" step="0.01" id="swu-${s.id}" placeholder="—" oninput="shopCalc(1);queueAutoSave('shop')" style="width:74px;border-color:var(--line2);font-weight:500"></td>
     <td class="num" id="swt-${s.id}" style="color:#0E7490;font-weight:700">—</td>
     <td class="num" id="stt-${s.id}" style="font-weight:800">—</td></tr>`).join('')
     : '<tr><td colspan="10" class="muted" style="text-align:center;padding:18px">ยังไม่มีร้านเช่า</td></tr>';
@@ -1562,9 +1712,10 @@ function shopCalc(manual){
     $('sec-'+s.id).title = warn?'เลขมิเตอร์น้อยกว่าเดือนก่อน — ถ้ามิเตอร์หมุนครบรอบ ให้กรอกหน่วยเองในช่องถัดไป':'';
   });
 }
-async function shopSave(){
+async function shopSave(auto){
+  clearTimeout(_autoT);
   const y=+$('sh-y').value, m=+$('sh-m').value;
-  if(!y||!m) return toast('เลือกปีและเดือนก่อน');
+  if(!y||!m){ if(!auto) toast('เลือกปีและเดือนก่อน'); return; }
   const rows=[];
   activeShops().forEach(s=>{
     const ep=n($('sep-'+s.id).value), ec=n($('sec-'+s.id).value), eu=n($('seu-'+s.id).value);
@@ -1576,14 +1727,22 @@ async function shopSave(){
       elec_prev:ep,elec_curr:ec,elec_unit:eu,elec_cost:et,
       water_prev:wp,water_curr:wc,water_unit:wu,water_cost:wt,total:r2(et+wt)});
   });
-  if(!rows.length) return toast('ยังไม่มีอะไรให้บันทึก');
-  const btn=$('sh-save'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…';
+  if(!rows.length){ if(!auto) toast('ยังไม่มีอะไรให้บันทึก'); return; }
+  const btn=$('sh-save');
+  if(auto) setAutoStatus('shop','<span class="spin"></span> กำลังบันทึก…');
+  else { btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…'; }
   S.shop_meter=S.shop_meter||[];
   rows.forEach(r=>upsertLocal(S.shop_meter,r,['year','month','shop_id']));
   saveCache();
   const res=await saveSheet('shop_meter',rows);
+  if(auto){
+    setAutoStatus('shop', res.ok
+      ? `<span style="color:var(--ok)">✓ บันทึกอัตโนมัติแล้ว ${autoStamp()}</span>`
+      : `<span style="color:var(--bad)">⚠ ยังไม่ขึ้น Sheet — เข้าคิวค้างส่งแล้ว</span>`);
+    dataChanged(); return;
+  }
   btn.disabled=false; btn.innerHTML='✓ บันทึกทุกร้าน';
-  shopLoad();
+  shopLoad(); setAutoStatus('shop',''); dataChanged();
   $('sh-msg').innerHTML = res.ok
     ? `<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>บันทึกขึ้น Google Sheets แล้ว — ${MFL[m-1]} ${y} · ${rows.length} ร้าน</div></div>`
     : `<div class="al al-b" style="margin:0"><span class="al-ic">⚠️</span><div><b>ยังไม่ขึ้น Sheet</b> — เก็บเข้าคิวค้างส่งแล้ว<br><span style="font-size:11.5px">${esc(res.error)}</span></div></div>`;
@@ -1837,6 +1996,10 @@ async function runSeed(){
 /* =======================================================================
    12) START
    ======================================================================= */
+document.getElementById('ver-side').innerHTML =
+  `<b style="color:#F2D060">${APP_VERSION}</b> · build ${APP_BUILD}`;
+document.title = `ติดตามค่าน้ำค่าไฟฟ้า ${APP_VERSION}`;
+console.log(`%c ติดตามค่าน้ำค่าไฟฟ้า ${APP_VERSION} (build ${APP_BUILD}) `,'background:#002E6D;color:#F2D060;font-weight:700;padding:3px 8px;border-radius:4px');
 buildNav();
 loadCache();
 ensureMeters();
