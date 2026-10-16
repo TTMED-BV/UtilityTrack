@@ -403,7 +403,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       </div>
       <div class="card">
         <div class="ch"><div><div class="ct">การเชื่อมต่อ Google Sheets</div></div></div>
-        <div class="fg"><label>Apps Script Web App URL</label><input type="text" id="s-api" placeholder="https://script.google.com/macros/s/.../exec"></div>
+        <div class="fg"><label>Apps Script Web App URL</label><input type="text" id="s-api" placeholder="https://script.google.com/macros/s/.../exec">
+          <div id="s-api-hint" class="hint"></div></div>
         <div class="row"><button class="btn btn-p btn-s" onclick="saveApi()">บันทึก URL</button>
           <button class="btn btn-s" onclick="testConn()">🔌 ทดสอบการเชื่อมต่อ</button></div>
         <div id="s-conn" class="mt"></div>
@@ -469,8 +470,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
-const APP_VERSION = 'v4.6';
-const APP_BUILD   = '2026-10-16 15:40';
+const APP_VERSION = 'v4.7';
+const APP_BUILD   = '2026-10-16 16:25';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const C = { psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' };
@@ -509,7 +510,17 @@ const DEFAULT_SETTINGS = {
 
 let S = { settings:{...DEFAULT_SETTINGS}, meter_config:[], elec_bill:[], elec_meter:[],
           water_bill:[], water_meter:[], shops:[], shop_meter:[] };
-let API = localStorage.getItem('tm_api') || '';
+/* ═══════════════════════════════════════════════════════════════════════
+   ⬇⬇⬇  ใส่ Web App URL ตรงนี้ครั้งเดียว  ⬇⬇⬇
+   ใส่แล้วทุกเครื่องที่เปิดเว็บนี้จะเห็นข้อมูลทันที ไม่ต้องไปตั้งค่าทีละเครื่อง
+   ตัวอย่าง: 'https://script.google.com/macros/s/AKfycbxxxxxxxx/exec'
+   (เว้นว่างไว้ = ต้องไปใส่เองที่หน้า ตั้งค่า เหมือนเดิม)
+   ═══════════════════════════════════════════════════════════════════════ */
+const DEFAULT_API = '';
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+// เครื่องที่เคยตั้งค่าเองไว้ ให้ใช้ของเครื่องนั้นก่อน ไม่งั้นใช้ค่าที่ฝังมาในไฟล์
+let API = localStorage.getItem('tm_api') || DEFAULT_API;
 let BE  = { ok:null, version:null };
 const charts = {};
 
@@ -1473,6 +1484,15 @@ function hardReload(){
 function renderSet(){
   $('ver-box').innerHTML=`${APP_VERSION} · build ${APP_BUILD}`;
   $('s-api').value=API||'';
+  const hint=$('s-api-hint');
+  if(hint){
+    const own=localStorage.getItem('tm_api')||'';
+    hint.innerHTML = !DEFAULT_API
+      ? 'ยังไม่ได้ฝัง URL ไว้ในไฟล์ — เครื่องใหม่ทุกเครื่องต้องมาใส่ตรงนี้เอง'
+      : (own && own!==DEFAULT_API)
+        ? `เครื่องนี้ตั้ง URL เองไว้ (ไม่ตรงกับที่ฝังในไฟล์) <button class="btn btn-s" style="margin-left:6px" onclick="useDefaultApi()">↺ ใช้ URL เริ่มต้นของระบบ</button>`
+        : '✓ ใช้ URL ที่ฝังมากับไฟล์ — เปิดเครื่องไหนก็เห็นข้อมูลทันที';
+  }
   $('s-org').value=S.settings.org||'';
   $('s-wrate').value=n(S.settings.water_rate)??24;
   $('s-hf').value=+S.settings.hospital_floors||3;
@@ -1530,6 +1550,12 @@ function saveApi(){
   const u=$('s-api').value.trim();
   if(!u) return toast('กรุณากรอก URL');
   API=u; localStorage.setItem('tm_api',u); toast('บันทึก URL แล้ว — กำลังโหลดข้อมูล'); loadAll(true);
+}
+/** ล้าง URL ที่เครื่องนี้ตั้งเอง กลับไปใช้ตัวที่ฝังมากับไฟล์ */
+function useDefaultApi(){
+  if(!DEFAULT_API) return toast('ไฟล์นี้ยังไม่ได้ฝัง URL ไว้');
+  localStorage.removeItem('tm_api'); API=DEFAULT_API;
+  toast('กลับไปใช้ URL เริ่มต้นแล้ว — กำลังโหลดข้อมูล'); loadAll(true);
 }
 async function saveSet(){
   S.settings.org=$('s-org').value;
