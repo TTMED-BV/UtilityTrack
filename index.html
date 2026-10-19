@@ -251,7 +251,10 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
     <div class="page" id="p-water">
       <div id="w-qa"></div>
       <div class="card">
-        <div class="ch"><div><div class="ct">1️⃣ บิลค่าน้ำ (ถ้ามี)</div><div class="cs">ถ้าไม่กรอก ระบบจะใช้ผลรวมมิเตอร์ย่อยทั้งหมดเป็นตัวตั้ง และคิดเงินจากอัตราต่อหน่วย</div></div></div>
+        <div class="ch"><div><div class="ct">1️⃣ หน่วยน้ำรวมและค่าน้ำรวม</div><div class="cs">ปกติคิดจากผลรวมมิเตอร์ย่อยทั้ง 17 ตัวให้อัตโนมัติ — แก้เลขมิเตอร์เมื่อไหร่ ยอดรวมเปลี่ยนตามทันที</div></div>
+          <label class="row" style="gap:6px;font-size:12.5px;cursor:pointer;white-space:nowrap">
+            <input type="checkbox" id="w-auto" checked onchange="waterAutoToggle()" style="width:auto;margin:0">
+            คิดจากมิเตอร์ย่อยอัตโนมัติ</label></div>
         <div class="g3">
           <div class="fg"><label>ปี (พ.ศ.)</label><input type="number" id="w-y" min="2560" max="2600" onchange="waterLoad()"></div>
           <div class="fg"><label>เดือน</label><select id="w-m" onchange="waterLoad()"></select></div>
@@ -474,8 +477,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
-const APP_VERSION = 'v4.8';
-const APP_BUILD   = '2026-10-16 17:05';
+const APP_VERSION = 'v4.9';
+const APP_BUILD   = '2026-10-19 09:45';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const C = { psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' };
@@ -663,7 +666,13 @@ function compute(type,y,m){
 
   const rate = n(S.settings.water_rate) || 24;
   // บิลที่ระบบคิดเองจากมิเตอร์ย่อย (src=submeter) ต้องคิดใหม่เสมอ ไม่งั้นแก้มิเตอร์แล้วยอดไม่ตาม
-  const derived = bill && String(bill.src||'')==='submeter';
+  // ค่าน้ำ: ถือว่า "คิดจากมิเตอร์" เสมอ ยกเว้นเดือนที่กดกรอกเองไว้ชัดเจน (src='bill')
+  // ไม่งั้นยอดรวมที่เคยบันทึกไว้จะค้าง ไม่ตามเลขมิเตอร์ที่แก้ทีหลัง
+  // ธง 'manual' = ผู้ใช้ติ๊กกรอกเองจริงๆ เท่านั้น
+  // ของเดิมเคยติดธง 'bill' ให้ทุกเดือนที่มีตัวเลข ซึ่งไม่ได้แปลว่ากรอกเอง จึงถือเป็นอัตโนมัติ
+  const derived = (type==='water')
+    ? String((bill&&bill.src)||'')!=='manual'
+    : (bill && String(bill.src||'')==='submeter');
   let totalUnit = (bill && !derived) ? n(bill.total_unit) : null;
   let totalCost = (bill && !derived) ? n(bill.total_cost) : null;
   let src = 'bill';
@@ -708,6 +717,26 @@ function qualityIssues(type){
         out.push({type,lbl,y:x.y,m:x.m,mc,sev:'warn',what:'หน่วยสูงผิดปกติ',detail:`ใช้ ${fmt(used,dp?1:0)} ขณะที่ปกติราว ${fmt(med,dp?1:0)}`});
     });
   });
+  // ค่าน้ำ: เดือนที่กรอกยอดรวมเองไว้ แล้วไม่ตรงกับผลรวมมิเตอร์ย่อย
+  if(type==='water'){
+    const any=cfg[0];
+    ms.forEach(([y,m])=>{
+      const bill=billOf('water',y,m);
+      if(!bill || String(bill.src||'')!=='manual') return;    // อัตโนมัติอยู่แล้ว ไม่ต้องเตือน
+      const tu=n(bill.total_unit); if(tu==null) return;
+      const got=cfg.filter(mc=>usedOf('water',y,m,mc)!=null);
+      if(!got.length) return;
+      const sub=got.reduce((s,mc)=>s+usedOf('water',y,m,mc),0);
+      const d=r2(tu-sub);
+      if(Math.abs(d)>0.5)
+        out.push({type,lbl:`${MN[m-1]} ${y}`,y,m,mc:any,sev:'bad',what:'หน่วยรวมไม่ตรงมิเตอร์',
+          detail:`บิลเก็บไว้ ${fmt(tu,2)} แต่มิเตอร์ ${got.length}/${cfg.length} ตัวรวมได้ ${fmt(sub,2)} (ต่าง ${d>0?'+':''}${fmt(d,2)} ลบ.ม.)`});
+      const tc=n(bill.total_cost), rate=n(bill.rate)||n(S.settings.water_rate)||24;
+      if(tc!=null && Math.abs(r2(tc-tu*rate))>0.5)
+        out.push({type,lbl:`${MN[m-1]} ${y}`,y,m,mc:any,sev:'warn',what:'ค่าน้ำไม่ตรงหน่วย×อัตรา',
+          detail:`บิลเก็บไว้ ${fmt(tc)} แต่ ${fmt(tu,2)} × ${rate} = ${fmt(r2(tu*rate))}`});
+    });
+  }
   return out;
 }
 
@@ -1150,8 +1179,11 @@ function waterLoad(){
     $('wc-'+mc.id).value = cr && n(cr.curr_raw)!=null ? n(cr.curr_raw) : '';
   });
   const b=billOf('water',y,m);
+  // เดือนที่เคยกดกรอกเองไว้ (src='bill') เท่านั้นที่ยังเป็นโหมดกรอกเอง นอกนั้นคิดอัตโนมัติ
+  $('w-auto').checked = !(b && String(b.src||'')==='manual');
   $('w-tu').value=b?(n(b.total_unit)??''):''; $('w-tc').value=b?(n(b.total_cost)??''):'';
   $('w-note').value=b?(b.remark||''):'';
+  waterAutoToggle._skip=true; waterAutoToggle(); waterAutoToggle._skip=false;
   const has=meters('water').some(mc=>meterRow('water',y,m,mc.id));
   $('w-status').innerHTML=(b||has)?'<span class="tag t-ok">✓ มีข้อมูลแล้ว — แก้ไขได้</span>':'<span class="tag t-n">เดือนใหม่</span>';
   $('w-msg').innerHTML='';
@@ -1172,12 +1204,42 @@ function waterCalc(){
     if(mc.zone==='hospital') hosp+=used;
   });
   const rate=n($('w-rate').value)||24;
+  const auto=waterAuto();
   let tu=n($('w-tu').value), tc=n($('w-tc').value), note='';
-  if(tu==null && sub>0){ tu=r2(sub); note='ใช้ผลรวมมิเตอร์ย่อยเป็นหน่วยรวม'; }
-  if(tc==null && tu!=null){ tc=r2(tu*rate); note+=(note?' · ':'')+`คิดเงินจากอัตรา ${rate} บาท/ลบ.ม.`; }
-  $('w-rate-hint').innerHTML = note?`<span class="tag t-i">${note}</span>`:'';
+  if(auto){
+    // โหมดอัตโนมัติ: ยอดรวมต้องเท่าผลรวมมิเตอร์เสมอ และเขียนกลับลงช่องให้เห็นด้วย
+    tu = (got>0||sub>0) ? r2(sub) : null;
+    tc = (tu!=null) ? r2(tu*rate) : null;
+    $('w-tu').value = tu!=null?tu:'';
+    $('w-tc').value = tc!=null?tc:'';
+    note = (tu!=null)
+      ? `คิดจากมิเตอร์ ${got}/${cfg.length} ตัว = ${fmt(sub,2)} ลบ.ม. × ${rate} บาท = ${fmt(tc)} บาท`
+      : 'ยังไม่มีเลขมิเตอร์ให้คิด';
+    $('w-rate-hint').innerHTML=`<span class="tag t-i">${note}</span>`;
+  } else {
+    if(tu==null && sub>0){ tu=r2(sub); note='ช่องหน่วยรวมว่าง — ใช้ผลรวมมิเตอร์ย่อยแทน'; }
+    if(tc==null && tu!=null){ tc=r2(tu*rate); note+=(note?' · ':'')+`คิดเงินจากอัตรา ${rate} บาท/ลบ.ม.`; }
+    // กรอกเอง: ถ้าไม่ตรงผลรวมมิเตอร์ต้องเตือนให้เห็น ไม่ใช่ปล่อยผ่านเงียบๆ
+    const dU = (tu!=null&&(got>0||sub>0)) ? r2(tu-sub) : null;
+    const dC = (tc!=null&&tu!=null) ? r2(tc-tu*rate) : null;
+    let warn='';
+    if(dU!=null&&Math.abs(dU)>0.5)
+      warn+=`<div class="al al-b" style="margin:6px 0 0"><span class="al-ic">⚠️</span><div><b>หน่วยรวมไม่ตรงกับมิเตอร์ย่อย</b> — กรอกไว้ ${fmt(tu,2)} แต่มิเตอร์ ${got}/${cfg.length} ตัวรวมได้ ${fmt(sub,2)} (ต่าง ${dU>0?'+':''}${fmt(dU,2)} ลบ.ม.)<br><span style="font-size:11.5px">ถ้าไม่ได้ตั้งใจ ให้ติ๊ก "คิดจากมิเตอร์ย่อยอัตโนมัติ" กลับ</span></div></div>`;
+    if(dC!=null&&Math.abs(dC)>0.5)
+      warn+=`<div class="al al-b" style="margin:6px 0 0"><span class="al-ic">⚠️</span><div><b>ค่าน้ำรวมไม่ตรงกับหน่วย × อัตรา</b> — กรอกไว้ ${fmt(tc)} แต่ ${fmt(tu,2)} × ${rate} = ${fmt(r2(tu*rate))} (ต่าง ${dC>0?'+':''}${fmt(dC)} บาท)</div></div>`;
+    $('w-rate-hint').innerHTML=(note?`<span class="tag t-w">${note}</span>`:'')+warn;
+  }
   renderSplit('w-calc',{hospUnit:r2(hosp),totalUnit:tu,totalCost:tc,got,nAll:cfg.length,
     hf:+S.settings.hospital_floors||3, ff:+S.settings.faculty_floors||5, unitLabel:'ลบ.ม.'});
+}
+/** โหมดคิดยอดรวมค่าน้ำ: true = คิดจากมิเตอร์ย่อยให้อัตโนมัติ */
+function waterAuto(){ const el=$('w-auto'); return !el || el.checked!==false; }
+function waterAutoToggle(){
+  const auto=waterAuto();
+  ['w-tu','w-tc'].forEach(id=>{ const el=$(id);
+    el.readOnly=auto; el.className=auto?'mi-p':'';
+    el.title=auto?'คิดจากผลรวมมิเตอร์ย่อยอัตโนมัติ — ถ้าจะกรอกเอง ให้เอาเครื่องหมายถูกออก':''; });
+  waterCalc(); queueAutoSave('water');
 }
 async function waterSave(auto){
   clearTimeout(_autoT);
@@ -1202,12 +1264,14 @@ async function waterSave(auto){
       prev_raw:pv, curr_raw:cv, multiplier:+mc.multiplier||1, used_unit:used });
   });
   const rate=n($('w-rate').value)||24;
+  const autoCalc=waterAuto();   // ชื่อนี้กันชนกับพารามิเตอร์ auto (= บันทึกอัตโนมัติ)
   let tu=n($('w-tu').value), tc=n($('w-tc').value);
+  if(autoCalc){ tu = sub>0?r2(sub):null; tc = tu!=null?r2(tu*rate):null; }   // อัตโนมัติ = เชื่อมิเตอร์เสมอ
   const exB=billOf('water',y,m);
   const bill={ id: exB?exB.id:uid('wb_'), year:y, month:m,
     total_unit: tu!=null?tu:(sub>0?r2(sub):null),
     total_cost: tc!=null?tc:(sub>0?r2(sub*rate):null),
-    rate, src: (tu!=null||tc!=null)?'bill':'submeter', remark:$('w-note').value||'' };
+    rate, src: autoCalc?'submeter':'manual', remark:$('w-note').value||'' };
   if(!any && tu==null && tc==null && !rows.length){ if(!auto) toast('ยังไม่มีอะไรให้บันทึก'); return; }
 
   const btn=$('w-save');
