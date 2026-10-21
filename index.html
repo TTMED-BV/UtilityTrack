@@ -184,15 +184,16 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
     <div class="page on" id="p-dash">
       <div class="g4 k2" id="dash-kpi" style="margin-bottom:16px"></div>
       <div class="card">
-        <div class="ch"><div><div class="ct">⚡ ค่าไฟรายเดือน — แบ่งโรงพยาบาล / คณะ</div><div class="cs">คำนวณจากสัดส่วนหน่วยมิเตอร์ชั้น B+1+2</div></div>
-          <div class="row"><span id="ytg-dash"></span>
+        <div class="ch"><div><div class="ct" id="dash-et">⚡ ค่าไฟรายเดือน — แบ่งโรงพยาบาล / คณะ</div><div class="cs">คำนวณจากสัดส่วนหน่วยมิเตอร์ชั้น B+1+2</div></div>
+          <div class="row"><span id="dtg-dash"></span><span id="ytg-dash"></span>
           <select id="dash-yr" class="btn btn-s" style="width:auto" onchange="renderDash()"></select></div></div>
         <div class="chart"><canvas id="c-dash-e"></canvas></div>
       </div>
       <div class="card">
-        <div class="ch"><div><div class="ct">💧 ค่าน้ำรายเดือน — แบ่งโรงพยาบาล / คณะ</div><div class="cs">คำนวณจากสัดส่วนหน่วยมิเตอร์โซนโรงพยาบาล</div></div></div>
+        <div class="ch"><div><div class="ct" id="dash-wt">💧 ค่าน้ำรายเดือน — แบ่งโรงพยาบาล / คณะ</div><div class="cs">คำนวณจากสัดส่วนหน่วยมิเตอร์โซนโรงพยาบาล</div></div></div>
         <div class="chart"><canvas id="c-dash-w"></canvas></div>
       </div>
+      <div class="g3 k2" id="dash-carb" style="margin-bottom:16px"></div>
       <div class="card">
         <div class="ch"><div class="ct">รายการล่าสุด</div></div>
         <div class="scroll" id="dash-recent"></div>
@@ -351,6 +352,27 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       </div>
     </div>
 
+    <!-- ======== CARBON ======== -->
+    <div class="page" id="p-carb">
+      <div class="g4 k2" id="cb-kpi" style="margin-bottom:16px"></div>
+      <div id="cb-warn"></div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">🌱 คาร์บอนฟุตพริ้นท์รายเดือน</div><div class="cs" id="cb-sub"></div></div>
+          <div class="row"><span id="ytg-cb"></span>
+          <select id="cb-yr" class="btn btn-s" style="width:auto" onchange="renderCarb()"></select>
+          <button class="btn btn-s" onclick="exportCarbXLSX()">📥 Excel</button></div></div>
+        <div class="chart"><canvas id="c-carb"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">ตารางรายเดือน</div><div class="cs">หน่วยที่ใช้ × EF = kgCO₂e · แบ่ง รพ./คณะ ด้วยสัดส่วนหน่วยชุดเดียวกับที่แบ่งค่าใช้จ่าย</div></div></div>
+        <div class="scroll" id="cb-tbl"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">ค่า EF ที่ใช้คำนวณ</div><div class="cs">แก้ได้ที่หน้า ตั้งค่า → คาร์บอนฟุตพริ้นท์</div></div></div>
+        <div id="cb-ef"></div>
+      </div>
+    </div>
+
     <!-- ======== SHOP ENTRY ======== -->
     <div class="page" id="p-shop">
       <div class="card">
@@ -406,6 +428,20 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
           <div class="cs">ถ้าแก้ไฟล์แล้วโปรแกรมยังทำงานแบบเดิม ให้ดูว่าเลขนี้ตรงกับไฟล์ที่เพิ่งเอาขึ้นหรือไม่</div></div></div>
         <div class="row"><span class="tag t-i" style="font-size:14px;padding:6px 14px" id="ver-box"></span>
           <button class="btn btn-s" onclick="hardReload()">♻️ โหลดไฟล์ใหม่ (ล้างแคชเบราว์เซอร์)</button></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">🌱 คาร์บอนฟุตพริ้นท์</div><div class="cs">ค่าการปล่อยก๊าซเรือนกระจก (Emission Factor) ที่ใช้คูณกับหน่วยที่ใช้จริง</div></div></div>
+        <div class="g3">
+          <div class="fg"><label>EF ไฟฟ้า ก่อน ม.ค. 2569 (kgCO₂e/kWh)</label><input type="number" id="s-efeo" step="0.0001" min="0"><div class="hint">อบก. grid mix ปี 2016–2018 = 0.4999</div></div>
+          <div class="fg"><label>EF ไฟฟ้า ตั้งแต่ ม.ค. 2569</label><input type="number" id="s-efen" step="0.0001" min="0"><div class="hint">อบก. ประกาศใหม่ Scope 2 = 0.4750</div></div>
+          <div class="fg"><label>EF น้ำประปา (kgCO₂e/ลบ.ม.)</label><input type="number" id="s-efw" step="0.0001" min="0"><div class="hint" id="s-efw-hint"></div></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>รวม Scope 3 ต้นน้ำเชื้อเพลิง</label><select id="s-efs3"><option value="0">ไม่รวม (รายงาน Scope 2 อย่างเดียว)</option><option value="1">รวม (+0.0812)</option></select></div>
+          <div class="fg"><label>ค่า Scope 3 (kgCO₂e/kWh)</label><input type="number" id="s-efs3v" step="0.0001" min="0"></div>
+          <div class="fg"><label>ยืนยัน EF น้ำประปาแล้ว</label><select id="s-efwok"><option value="0">ยังไม่ยืนยัน — ขึ้นป้ายเตือน</option><option value="1">ยืนยันแล้ว ตรงกับ CFO ของคณะ</option></select></div>
+        </div>
+        <div class="row mt"><button class="btn btn-p btn-s" onclick="saveEF()">บันทึกค่า EF</button><span id="s-efmsg" style="font-size:12px"></span></div>
         <div class="hint">ถ้ากดแล้วเลขเวอร์ชันไม่เปลี่ยน แปลว่ายังไม่ได้เอาไฟล์ใหม่ขึ้นไปแทนที่</div>
       </div>
       <div class="card">
@@ -477,8 +513,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
-const APP_VERSION = 'v4.9';
-const APP_BUILD   = '2026-10-19 09:45';
+const APP_VERSION = 'v5.1';
+const APP_BUILD   = '2026-10-21 10:15';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const C = { psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' };
@@ -512,7 +548,14 @@ const DEFAULT_SETTINGS = {
   org:'คณะการแพทย์แผนไทย มหาวิทยาลัยสงขลานครินทร์',
   water_rate:24, hospital_floors:3, faculty_floors:5, autosave:true,
   // อัตราค่าไฟร้านเช่าแบบขั้นบันได
-  shop_t1:150, shop_t2:500, shop_r1:5, shop_r2:6, shop_r3:7, shop_water_rate:24, shop_rate_mode:'flat'
+  shop_t1:150, shop_t2:500, shop_r1:5, shop_r2:6, shop_r3:7, shop_water_rate:24, shop_rate_mode:'flat',
+  /* ค่าการปล่อยก๊าซเรือนกระจก (Emission Factor)
+     ไฟฟ้า — อบก. ประกาศ 0.4750 kgCO2e/kWh (Scope 2) มีผล 1 ม.ค. 2569
+             ของเดิม 0.4999 (grid mix 2016–2018) ใช้กับเดือนก่อนหน้า
+             Scope 3 ต้นน้ำเชื้อเพลิงอีก 0.0812 แยกไว้ เปิด-ปิดได้
+     น้ำประปา — ยังไม่ได้ยืนยันกับเอกสาร อบก. ต้องแก้ให้ตรงกับที่คณะใช้ใน CFO */
+  ef_elec_old:0.4999, ef_elec_new:0.4750, ef_elec_from:256901, ef_elec_s3:0.0812, ef_s3_on:false,
+  ef_water:0.8, ef_water_ok:false
 };
 
 let S = { settings:{...DEFAULT_SETTINGS}, meter_config:[], elec_bill:[], elec_meter:[],
@@ -537,6 +580,7 @@ const charts = {};
 const $  = id => document.getElementById(id);
 const n  = v => { if(v===''||v===null||v===undefined) return null; const x=parseFloat(v); return isNaN(x)?null:x; };
 const r2 = v => v==null?null:Math.round(v*100)/100;
+const r4 = v => v==null?null:Math.round(v*10000)/10000;
 const fmt = (v,d=0) => v==null?'—':Number(v).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtB= v => v==null?'—':Number(v).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pctS= v => v==null?'—':(v*100).toFixed(2)+'%';
@@ -629,7 +673,19 @@ function ytgHTML(){
     <button class="sgb${isFY()?' on':''}" onclick="setYMode('fy')" title="ต.ค. ถึง ก.ย. ปีถัดไป">ปีงบ</button>
     <button class="sgb${isFY()?'':' on'}" onclick="setYMode('cy')" title="ม.ค. ถึง ธ.ค.">ปีปฏิทิน</button></span>`;
 }
-const YTG = ['dash','er','wr','an','hm','sr'];
+const YTG = ['dash','er','wr','an','hm','sr','cb'];
+
+/* ----- สวิตช์หน่วยบนแดชบอร์ด: บาท หรือ หน่วยที่ใช้ (kWh / ลบ.ม.) ----- */
+let DMODE = 'cost';
+const isUnit = () => DMODE==='unit';
+function dtgHTML(){
+  const u=isUnit();
+  return `<span class="seg">
+    <button class="sgb${u?'':' on'}" onclick="setDMode('cost')" title="ดูเป็นยอดเงิน">฿ บาท</button>
+    <button class="sgb${u?' on':''}" onclick="setDMode('unit')" title="ดูเป็นหน่วยที่ใช้จริง kWh และ ลบ.ม.">หน่วย</button></span>`;
+}
+function paintDtg(){ const el=$('dtg-dash'); if(el) el.innerHTML=dtgHTML(); }
+function setDMode(v){ if(DMODE===v) return; DMODE=v; renderDash(); }
 function paintYtg(){ YTG.forEach(k=>{ const el=$('ytg-'+k); if(el) el.innerHTML=ytgHTML(); }); }
 function setYMode(v){
   if(YMODE===v) return;
@@ -638,7 +694,7 @@ function setYMode(v){
   ['dash-yr','er-yr','wr-yr','sr-yr','sr-mo'].forEach(id=>{ const el=$(id); if(el) el.innerHTML=''; });
   paintYtg();
   const p=curPage();
-  if(['dash','erep','wrep','ana','heat','srep'].includes(p)) render(p);
+  if(['dash','erep','wrep','ana','heat','srep','carb'].includes(p)) render(p);
 }
 
 /* =======================================================================
@@ -692,6 +748,40 @@ function compute(type,y,m){
     totalUnit,totalCost,pct,hospCost,facCost,facUnit,effRate,src,
     avgHosp: hospCost!=null?r2(hospCost/hf):null, avgFac: facCost!=null?r2(facCost/ff):null, hf, ff };
 }
+/* =======================================================================
+   2b) คาร์บอนฟุตพริ้นท์ — kgCO2e จากหน่วยที่ใช้จริง
+   ======================================================================= */
+/** EF ไฟฟ้าของเดือนนั้น — สลับเป็นค่าใหม่ตั้งแต่เดือนที่ อบก. ประกาศใช้ */
+function efElec(y,m){
+  const sw = +S.settings.ef_elec_from || 256901;
+  const base = (mkey(y,m) >= sw) ? (n(S.settings.ef_elec_new) ?? 0.4750)
+                                 : (n(S.settings.ef_elec_old) ?? 0.4999);
+  const s3 = (S.settings.ef_s3_on===true || S.settings.ef_s3_on==='true')
+    ? (n(S.settings.ef_elec_s3) ?? 0.0812) : 0;
+  return r4(base + s3);
+}
+const efWater = () => n(S.settings.ef_water) ?? 0.8;
+/** คาร์บอนรายเดือน แยก รพ./คณะ ด้วยสัดส่วนหน่วยชุดเดียวกับที่ใช้แบ่งค่าใช้จ่าย */
+function carbonOf(y,m){
+  const e=compute('elec',y,m), w=compute('water',y,m);
+  const eEF=efElec(y,m), wEF=efWater();
+  const eU=e.totalUnit, wU=w.totalUnit;
+  const eKg = eU!=null ? r2(eU*eEF) : null;
+  const wKg = wU!=null ? r2(wU*wEF) : null;
+  const eH = (eKg!=null&&e.pct!=null) ? r2(eKg*e.pct) : null;
+  const wH = (wKg!=null&&w.pct!=null) ? r2(wKg*w.pct) : null;
+  const eF = (eKg!=null&&eH!=null) ? r2(eKg-eH) : null;
+  const wF = (wKg!=null&&wH!=null) ? r2(wKg-wH) : null;
+  const tot = (eKg!=null||wKg!=null) ? r2((eKg||0)+(wKg||0)) : null;
+  const hos = (eH!=null||wH!=null) ? r2((eH||0)+(wH||0)) : null;
+  const fac = (eF!=null||wF!=null) ? r2((eF||0)+(wF||0)) : null;
+  return { y,m, eUnit:eU, wUnit:wU, eEF, wEF, eKg, wKg, eHos:eH, wHos:wH, eFac:eF, wFac:wF,
+           total:tot, hosp:hos, fac, ePct:e.pct, wPct:w.pct };
+}
+function carbonMonths(){ return allMonths().map(([y,m])=>carbonOf(y,m)).filter(c=>c.total!=null); }
+/** กก. → ตัน เมื่อตัวเลขใหญ่ จะได้อ่านง่าย */
+const kgS = v => v==null ? '—' : (Math.abs(v)>=1000 ? fmt(v/1000,2)+' tCO₂e' : fmt(v,1)+' kgCO₂e');
+
 function computedMonths(type){
   return allMonths().map(([y,m])=>compute(type,y,m)).filter(c=>c.nMeter>0 || c.bill);
 }
@@ -865,6 +955,7 @@ const PAGES=[
   {id:'ana',  ic:'📈', t:'วิเคราะห์'},
   {id:'heat', ic:'🗓️', t:'Heatmap'},
   {id:'qa',   ic:'🔍', t:'ตรวจคุณภาพข้อมูล'},
+  {id:'carb', ic:'🌱', t:'คาร์บอนฟุตพริ้นท์'},
   {sec:'ร้านเช่า'},
   {id:'shop', ic:'🏪', t:'บันทึกมิเตอร์ร้าน'},
   {id:'srep', ic:'🧾', t:'รายงานร้านเช่า'},
@@ -895,7 +986,7 @@ function dataChanged(){
   saveCache(); badges();
   const p=curPage();
   // หน้าอ่านอย่างเดียว เรนเดอร์ใหม่ได้เลย
-  if(['dash','erep','wrep','ana','heat','qa','srep'].includes(p)) render(p);
+  if(['dash','erep','wrep','ana','heat','qa','srep','carb'].includes(p)) render(p);
   // หน้ากรอกข้อมูล อัปเดตแถบตรวจคุณภาพโดยไม่ไปยุ่งกับช่องที่กำลังพิมพ์
   if(p==='elec')  renderEntryQA('elec');
   if(p==='water') renderEntryQA('water');
@@ -946,6 +1037,7 @@ function render(id){
   if(id==='ana')  renderAna();
   if(id==='heat') renderHeat();
   if(id==='qa')   renderQA();
+  if(id==='carb') renderCarb();
   if(id==='shop') shopInit();
   if(id==='srep') renderSRep();
   if(id==='set')  renderSet();
@@ -1305,7 +1397,7 @@ function waterClear(){ meters('water').forEach(mc=>$('wc-'+mc.id).value=''); ['w
    7) DASHBOARD
    ======================================================================= */
 function renderDash(){
-  paintYtg();
+  paintYtg(); paintDtg();
   const ys=years(); const y=yrSel($('dash-yr'));
   const E=computedMonths('elec').filter(c=>inYear(c,y));
   const W=computedMonths('water').filter(c=>inYear(c,y));
@@ -1313,25 +1405,43 @@ function renderDash(){
   const lastOf=t=>{ const a=computedMonths(t).filter(c=>c.totalCost!=null); return a.length?a[a.length-1]:null; };
   const lastE=lastOf('elec'), lastW=lastOf('water');
   const sum=(a,k)=>a.reduce((s,x)=>s+(x[k]||0),0);
+  const U=isUnit();
+  // คีย์และป้ายเปลี่ยนตามโหมด — บาท หรือ หน่วยที่ใช้จริง
+  const K = U
+    ? {tot:'totalUnit', hos:'hospUnit', fac:'facUnit', eu:'kWh', wu:'ลบ.ม.', dpE:0, dpW:1, verb:'หน่วย'}
+    : {tot:'totalCost', hos:'hospCost', fac:'facCost', eu:'บาท', wu:'บาท', dpE:0, dpW:0, verb:'ค่า'};
+  const sub = (v,u) => `${fmt(v)} ${u}`;
   $('dash-kpi').innerHTML=`
-    <div class="kpi k-b"><div class="kpi-l">⚡ ค่าไฟเดือนล่าสุด</div><div class="kpi-v">${lastE&&lastE.totalCost!=null?fmt(lastE.totalCost):'—'}</div>
-      <div class="kpi-s">${lastE?MFL[lastE.m-1]+' '+lastE.y:'ยังไม่มีข้อมูล'} · ${lastE?fmt(lastE.totalUnit)+' kWh':''}</div></div>
-    <div class="kpi k-t"><div class="kpi-l">💧 ค่าน้ำเดือนล่าสุด</div><div class="kpi-v">${lastW&&lastW.totalCost!=null?fmt(lastW.totalCost):'—'}</div>
-      <div class="kpi-s">${lastW?MFL[lastW.m-1]+' '+lastW.y:'ยังไม่มีข้อมูล'} · ${lastW?fmt(lastW.totalUnit)+' ลบ.ม.':''}</div></div>
-    <div class="kpi k-g"><div class="kpi-l">ค่าไฟสะสม ${yrLbl(y)}</div><div class="kpi-v">${fmt(sum(E,'totalCost'))}</div>
-      <div class="kpi-s">บาท · ${fmt(sum(E,'totalUnit'))} kWh</div></div>
-    <div class="kpi k-r"><div class="kpi-l">ค่าน้ำสะสม ${yrLbl(y)}</div><div class="kpi-v">${fmt(sum(W,'totalCost'))}</div>
-      <div class="kpi-s">บาท · ${fmt(sum(W,'totalUnit'))} ลบ.ม.</div></div>
-    <div class="kpi k-b"><div class="kpi-l">🏥 ค่าไฟโรงพยาบาลสะสม</div><div class="kpi-v">${fmt(sum(E,'hospCost'))}</div>
-      <div class="kpi-s">บาท · ${yrLbl(y)}</div></div>
-    <div class="kpi k-g"><div class="kpi-l">🏛️ ค่าไฟคณะสะสม</div><div class="kpi-v">${fmt(sum(E,'facCost'))}</div>
-      <div class="kpi-s">บาท · ${yrLbl(y)}</div></div>
-    <div class="kpi k-t"><div class="kpi-l">🏥 ค่าน้ำโรงพยาบาลสะสม</div><div class="kpi-v">${fmt(sum(W,'hospCost'))}</div>
-      <div class="kpi-s">บาท · ${yrLbl(y)}</div></div>
-    <div class="kpi k-r"><div class="kpi-l">🏛️ ค่าน้ำคณะสะสม</div><div class="kpi-v">${fmt(sum(W,'facCost'))}</div>
-      <div class="kpi-s">บาท · ${yrRange(y)}</div></div>`;
-  stackChart('c-dash-e','dashE',E,'บาท');
-  stackChart('c-dash-w','dashW',W,'บาท');
+    <div class="kpi k-b"><div class="kpi-l">⚡ ${U?'หน่วยไฟ':'ค่าไฟ'}เดือนล่าสุด</div><div class="kpi-v">${lastE&&lastE[K.tot]!=null?fmt(lastE[K.tot],K.dpE):'—'}</div>
+      <div class="kpi-s">${lastE?MFL[lastE.m-1]+' '+lastE.y:'ยังไม่มีข้อมูล'} · ${lastE?(U?sub(lastE.totalCost,'บาท'):sub(lastE.totalUnit,'kWh')):''}</div></div>
+    <div class="kpi k-t"><div class="kpi-l">💧 ${U?'หน่วยน้ำ':'ค่าน้ำ'}เดือนล่าสุด</div><div class="kpi-v">${lastW&&lastW[K.tot]!=null?fmt(lastW[K.tot],K.dpW):'—'}</div>
+      <div class="kpi-s">${lastW?MFL[lastW.m-1]+' '+lastW.y:'ยังไม่มีข้อมูล'} · ${lastW?(U?sub(lastW.totalCost,'บาท'):sub(lastW.totalUnit,'ลบ.ม.')):''}</div></div>
+    <div class="kpi k-g"><div class="kpi-l">${U?'หน่วยไฟ':'ค่าไฟ'}สะสม ${yrLbl(y)}</div><div class="kpi-v">${fmt(sum(E,K.tot),K.dpE)}</div>
+      <div class="kpi-s">${K.eu} · ${U?sub(sum(E,'totalCost'),'บาท'):sub(sum(E,'totalUnit'),'kWh')}</div></div>
+    <div class="kpi k-r"><div class="kpi-l">${U?'หน่วยน้ำ':'ค่าน้ำ'}สะสม ${yrLbl(y)}</div><div class="kpi-v">${fmt(sum(W,K.tot),K.dpW)}</div>
+      <div class="kpi-s">${K.wu} · ${U?sub(sum(W,'totalCost'),'บาท'):sub(sum(W,'totalUnit'),'ลบ.ม.')}</div></div>
+    <div class="kpi k-b"><div class="kpi-l">🏥 ${U?'หน่วยไฟ':'ค่าไฟ'}โรงพยาบาลสะสม</div><div class="kpi-v">${fmt(sum(E,K.hos),K.dpE)}</div>
+      <div class="kpi-s">${K.eu} · ${yrLbl(y)}</div></div>
+    <div class="kpi k-g"><div class="kpi-l">🏛️ ${U?'หน่วยไฟ':'ค่าไฟ'}คณะสะสม</div><div class="kpi-v">${fmt(sum(E,K.fac),K.dpE)}</div>
+      <div class="kpi-s">${K.eu} · ${yrLbl(y)}</div></div>
+    <div class="kpi k-t"><div class="kpi-l">🏥 ${U?'หน่วยน้ำ':'ค่าน้ำ'}โรงพยาบาลสะสม</div><div class="kpi-v">${fmt(sum(W,K.hos),K.dpW)}</div>
+      <div class="kpi-s">${K.wu} · ${yrLbl(y)}</div></div>
+    <div class="kpi k-r"><div class="kpi-l">🏛️ ${U?'หน่วยน้ำ':'ค่าน้ำ'}คณะสะสม</div><div class="kpi-v">${fmt(sum(W,K.fac),K.dpW)}</div>
+      <div class="kpi-s">${K.wu} · ${yrRange(y)}</div></div>`;
+  // คาร์บอนสะสมของปีที่เลือก
+  const CB=carbonMonths().filter(c=>inYear(c,y));
+  const cSum=k=>CB.reduce((t,c)=>t+(c[k]||0),0);
+  $('dash-carb').innerHTML=`
+    <div class="kpi k-g"><div class="kpi-l">🌱 คาร์บอนรวม ${yrLbl(y)}</div><div class="kpi-v">${fmt(cSum('total')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ไฟ ${fmt(cSum('eKg')/1000,2)} · น้ำ ${fmt(cSum('wKg')/1000,2)}</div></div>
+    <div class="kpi k-b"><div class="kpi-l">🏥 คาร์บอนโรงพยาบาล</div><div class="kpi-v">${fmt(cSum('hosp')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${cSum('total')?pctS(cSum('hosp')/cSum('total')):'—'}</div></div>
+    <div class="kpi k-t"><div class="kpi-l">🏛️ คาร์บอนคณะ</div><div class="kpi-v">${fmt(cSum('fac')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${cSum('total')?pctS(cSum('fac')/cSum('total')):'—'}</div></div>`;
+  $('dash-et').textContent = U ? '⚡ หน่วยไฟรายเดือน — แบ่งโรงพยาบาล / คณะ' : '⚡ ค่าไฟรายเดือน — แบ่งโรงพยาบาล / คณะ';
+  $('dash-wt').textContent = U ? '💧 หน่วยน้ำรายเดือน — แบ่งโรงพยาบาล / คณะ' : '💧 ค่าน้ำรายเดือน — แบ่งโรงพยาบาล / คณะ';
+  stackChart('c-dash-e','dashE',E, U?'kWh':'บาท',   K.hos, K.fac);
+  stackChart('c-dash-w','dashW',W, U?'ลบ.ม.':'บาท', K.hos, K.fac);
 
   const rec=[...computedMonths('elec').map(c=>({...c,k:'⚡ ค่าไฟ'})),...computedMonths('water').map(c=>({...c,k:'💧 ค่าน้ำ'}))]
     .sort((a,b)=>mkey(b.y,b.m)-mkey(a.y,a.m)).slice(0,10);
@@ -1340,17 +1450,20 @@ function renderDash(){
       <td class="num"><span class="tag t-i">${pctS(c.pct)}</span></td><td class="num">${fmt(c.hospCost)}</td><td class="num">${fmt(c.facCost)}</td></tr>`).join('')
     || '<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูล</td></tr>'}</tbody></table>`;
 }
-function stackChart(canvasId,key,rows,unit){
+function stackChart(canvasId,key,rows,unit,hK,fK){
   dc(key);
   const el=$(canvasId); if(!el) return;
+  const hk=hK||'hospCost', fk=fK||'facCost';
+  const dp=unit==='บาท'?0:1;
   const labels=rows.map(c=>mLbl(c.y,c.m));
   charts[key]=new Chart(el,{type:'bar',data:{labels,datasets:[
-    {label:'โรงพยาบาล',data:rows.map(c=>c.hospCost??0),backgroundColor:C.psu,borderRadius:4},
-    {label:'คณะ',data:rows.map(c=>c.facCost??0),backgroundColor:C.gold,borderRadius:4}
+    {label:'โรงพยาบาล',data:rows.map(c=>c[hk]??0),backgroundColor:C.psu,borderRadius:4},
+    {label:'คณะ',data:rows.map(c=>c[fk]??0),backgroundColor:C.gold,borderRadius:4}
   ]},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
-      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)} ${unit}`}}},
-    scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>fmt(v)}}}}});
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y,dp)} ${unit}`}}},
+    scales:{x:{stacked:true,grid:{display:false}},
+      y:{stacked:true,beginAtZero:true,title:{display:true,text:unit},ticks:{callback:v=>fmt(v)}}}}});
 }
 
 /* =======================================================================
@@ -1483,6 +1596,119 @@ function renderHeat(){
   h+='</div>';
   $('hm-box').innerHTML=h;
 }
+function renderCarb(){
+  paintYtg();
+  const y = yrSel($('cb-yr'));
+  const all = carbonMonths();
+  const rows = all.filter(c=>inYear(c,y));
+  const T = k => rows.reduce((t,c)=>t+(c[k]||0),0);
+  const efOk = S.settings.ef_water_ok===true || S.settings.ef_water_ok==='true';
+  const s3On = S.settings.ef_s3_on===true || S.settings.ef_s3_on==='true';
+
+  $('cb-sub').textContent = `${yrLbl(y)} = ${yrRange(y)} · ${s3On?'รวม Scope 3 ต้นน้ำเชื้อเพลิง':'Scope 2 อย่างเดียว'}`;
+
+  $('cb-warn').innerHTML = efOk ? '' :
+    `<div class="al al-b"><span class="al-ic">⚠️</span><div><b>ค่า EF น้ำประปายังไม่ได้ยืนยัน</b> — ตอนนี้ใช้ ${efWater()} kgCO₂e/ลบ.ม. เป็นค่าตั้งต้น ยังไม่ได้เทียบกับเอกสาร อบก.<br>
+      <span style="font-size:11.5px">ให้ใส่ค่าที่คณะใช้ใน CFO แล้วเลือก "ยืนยันแล้ว" ที่หน้า <b>ตั้งค่า → คาร์บอนฟุตพริ้นท์</b> ตัวเลขค่าไฟฟ้าใช้ค่า อบก. ถูกต้องอยู่แล้ว</span></div></div>`;
+
+  $('cb-kpi').innerHTML = `
+    <div class="kpi k-g"><div class="kpi-l">🌱 คาร์บอนรวม ${yrLbl(y)}</div><div class="kpi-v">${fmt(T('total')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${rows.length} เดือน</div></div>
+    <div class="kpi k-b"><div class="kpi-l">⚡ จากไฟฟ้า</div><div class="kpi-v">${fmt(T('eKg')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${fmt(T('eUnit'))} kWh</div></div>
+    <div class="kpi k-t"><div class="kpi-l">💧 จากน้ำประปา</div><div class="kpi-v">${fmt(T('wKg')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${fmt(T('wUnit'))} ลบ.ม.</div></div>
+    <div class="kpi k-r"><div class="kpi-l">เฉลี่ยต่อเดือน</div><div class="kpi-v">${rows.length?fmt(T('total')/rows.length,0):'—'}</div>
+      <div class="kpi-s">kgCO₂e/เดือน</div></div>
+    <div class="kpi k-b"><div class="kpi-l">🏥 ส่วนโรงพยาบาล</div><div class="kpi-v">${fmt(T('hosp')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${T('total')?pctS(T('hosp')/T('total')):'—'} ของทั้งอาคาร</div></div>
+    <div class="kpi k-g"><div class="kpi-l">🏛️ ส่วนคณะ</div><div class="kpi-v">${fmt(T('fac')/1000,2)}</div>
+      <div class="kpi-s">tCO₂e · ${T('total')?pctS(T('fac')/T('total')):'—'} ของทั้งอาคาร</div></div>`;
+
+  $('cb-tbl').innerHTML = rows.length ? `<table><thead><tr>
+    <th>เดือน</th><th class="num">หน่วยไฟ (kWh)</th><th class="num">EF ไฟ</th><th class="num">kgCO₂e ไฟ</th>
+    <th class="num">หน่วยน้ำ (ลบ.ม.)</th><th class="num">kgCO₂e น้ำ</th>
+    <th class="num">รวม</th><th class="num">🏥 รพ.</th><th class="num">🏛️ คณะ</th></tr></thead><tbody>
+    ${rows.map(c=>`<tr>
+      <td style="white-space:nowrap">${MFL[c.m-1]}${isFY()?` <span class="muted" style="font-size:11px">${c.y}</span>`:''}</td>
+      <td class="num">${c.eUnit==null?'—':fmt(c.eUnit)}</td>
+      <td class="num muted" style="font-size:11.5px">${c.eEF}</td>
+      <td class="num">${c.eKg==null?'—':fmt(c.eKg,1)}</td>
+      <td class="num">${c.wUnit==null?'—':fmt(c.wUnit,1)}</td>
+      <td class="num">${c.wKg==null?'—':fmt(c.wKg,1)}</td>
+      <td class="num" style="font-weight:700">${fmt(c.total,1)}</td>
+      <td class="num" style="color:var(--psu);font-weight:600">${c.hosp==null?'—':fmt(c.hosp,1)}</td>
+      <td class="num" style="color:var(--gold-d);font-weight:600">${c.fac==null?'—':fmt(c.fac,1)}</td></tr>`).join('')}
+    <tr style="background:var(--soft);font-weight:800">
+      <td>รวม ${rows.length} เดือน</td>
+      <td class="num">${fmt(T('eUnit'))}</td><td></td><td class="num">${fmt(T('eKg'),1)}</td>
+      <td class="num">${fmt(T('wUnit'),1)}</td><td class="num">${fmt(T('wKg'),1)}</td>
+      <td class="num">${fmt(T('total'),1)}</td>
+      <td class="num" style="color:var(--psu)">${fmt(T('hosp'),1)}</td>
+      <td class="num" style="color:var(--gold-d)">${fmt(T('fac'),1)}</td></tr></tbody></table>
+    <div class="hint" style="padding:8px 2px">รวมทั้งหมด ${kgS(T('total'))} — โรงพยาบาล ${kgS(T('hosp'))} · คณะ ${kgS(T('fac'))}</div>`
+    : `<div class="muted" style="padding:20px;text-align:center">ยังไม่มีข้อมูล${yrLbl(y)}</div>`;
+
+  const sw=+S.settings.ef_elec_from||256901;
+  $('cb-ef').innerHTML = `<table><thead><tr><th>รายการ</th><th class="num">ค่า</th><th>หน่วย</th><th>ที่มา</th></tr></thead><tbody>
+    <tr><td>ไฟฟ้า — เดือนก่อน ${MN[(sw%100)-1]} ${Math.floor(sw/100)}</td><td class="num">${n(S.settings.ef_elec_old)??0.4999}</td><td>kgCO₂e/kWh</td><td class="muted">อบก. grid mix ปี 2016–2018</td></tr>
+    <tr><td>ไฟฟ้า — ตั้งแต่ ${MN[(sw%100)-1]} ${Math.floor(sw/100)}</td><td class="num">${n(S.settings.ef_elec_new)??0.4750}</td><td>kgCO₂e/kWh</td><td class="muted">อบก. ประกาศใหม่ Scope 2 มีผล 1 ม.ค. 2569</td></tr>
+    <tr><td>ไฟฟ้า — Scope 3 ต้นน้ำเชื้อเพลิง</td><td class="num">${s3On?(n(S.settings.ef_elec_s3)??0.0812):'ไม่รวม'}</td><td>kgCO₂e/kWh</td><td class="muted">การขุด กลั่น ขนส่งเชื้อเพลิง</td></tr>
+    <tr><td>น้ำประปา</td><td class="num">${efWater()}</td><td>kgCO₂e/ลบ.ม.</td><td>${efOk?'<span class="tag t-ok">ยืนยันแล้ว</span>':'<span class="tag t-b">ยังไม่ยืนยัน</span>'}</td></tr>
+    </tbody></table>`;
+
+  dc('carb');
+  charts.carb=new Chart($('c-carb'),{type:'bar',data:{
+    labels:rows.map(c=>mLbl(c.y,c.m)),
+    datasets:[
+      {label:'⚡ ไฟฟ้า',data:rows.map(c=>c.eKg??0),backgroundColor:C.psu,borderRadius:4},
+      {label:'💧 น้ำประปา',data:rows.map(c=>c.wKg??0),backgroundColor:C.teal,borderRadius:4}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y,1)} kgCO₂e`}}},
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,
+        title:{display:true,text:'kgCO₂e'},ticks:{callback:v=>fmt(v)}}}}});
+}
+function saveEF(){
+  const g=(id,d)=>n($(id).value)??d;
+  S.settings.ef_elec_old=g('s-efeo',0.4999);
+  S.settings.ef_elec_new=g('s-efen',0.4750);
+  S.settings.ef_water   =g('s-efw',0.8);
+  S.settings.ef_elec_s3 =g('s-efs3v',0.0812);
+  S.settings.ef_s3_on   =$('s-efs3').value==='1';
+  S.settings.ef_water_ok=$('s-efwok').value==='1';
+  saveCache();
+  push('savesettings',S.settings).then(r=>{
+    $('s-efmsg').innerHTML=r.ok?'<span style="color:var(--ok)">✓ บันทึกแล้ว</span>':'<span style="color:var(--warn)">บันทึกในเครื่อง — เข้าคิว</span>';
+    setTimeout(()=>$('s-efmsg').innerHTML='',3000);
+  });
+  renderSet(); dataChanged();
+}
+async function exportCarbXLSX(){
+  const y=+$('cb-yr').value;
+  const rows=carbonMonths().filter(c=>inYear(c,y));
+  const wb=new ExcelJS.Workbook(); wb.creator='ติดตามค่าน้ำค่าไฟฟ้า';
+  const ws=wb.addWorksheet('คาร์บอน '+yrLbl(y));
+  ws.columns=[{header:isFY()?'ปีงบ':'ปี',key:'fy',width:9},{header:'ปีปฏิทิน',key:'y',width:10},
+    {header:'เดือน',key:'m',width:12},
+    {header:'หน่วยไฟ (kWh)',key:'eu',width:15},{header:'EF ไฟ',key:'ef',width:10},
+    {header:'kgCO2e ไฟ',key:'ek',width:14},
+    {header:'หน่วยน้ำ (ลบ.ม.)',key:'wu',width:16},{header:'EF น้ำ',key:'wf',width:10},
+    {header:'kgCO2e น้ำ',key:'wk',width:14},
+    {header:'รวม kgCO2e',key:'t',width:14},{header:'โรงพยาบาล',key:'h',width:14},{header:'คณะ',key:'f',width:14}];
+  ws.getRow(1).eachCell(c=>{c.font={bold:true,color:{argb:'FFFFFFFF'}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF14532D'}};c.alignment={horizontal:'center'};});
+  rows.forEach(c=>{
+    const r=ws.addRow({fy:yrOf(c.y,c.m),y:c.y,m:MFL[c.m-1],eu:c.eUnit,ef:c.eEF,ek:c.eKg,
+      wu:c.wUnit,wf:c.wEF,wk:c.wKg,t:c.total,h:c.hosp,f:c.fac});
+    ['eu','ek','wu','wk','t','h','f'].forEach(k=>r.getCell(k).numFmt='#,##0.00');
+    ['ef','wf'].forEach(k=>r.getCell(k).numFmt='0.0000');
+  });
+  ws.views=[{state:'frozen',ySplit:1}];
+  const buf=await wb.xlsx.writeBuffer();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf]));
+  a.download=`คาร์บอนฟุตพริ้นท์_${isFY()?'ปีงบ':'ปี'}${y}.xlsx`; a.click();
+}
 function renderQA(){
   const all=[...qualityIssues('elec'),...qualityIssues('water')].sort((a,b)=>mkey(a.y,a.m)-mkey(b.y,b.m));
   if(!all.length){ $('qa-box').innerHTML='<div class="al al-s" style="margin:0"><span class="al-ic">✓</span><div>ไม่พบจุดผิดปกติ ข้อมูลต่อเนื่องดีทุกมิเตอร์</div></div>'; return; }
@@ -1570,6 +1796,15 @@ function renderSet(){
   $('s-r3').value=+S.settings.shop_r3||7;   $('s-swr').value=+S.settings.shop_water_rate||24;
   $('s-smode').value=S.settings.shop_rate_mode||'flat';
   $('s-auto').value=autoOn()?'1':'0';
+  $('s-efeo').value=n(S.settings.ef_elec_old)??0.4999;
+  $('s-efen').value=n(S.settings.ef_elec_new)??0.4750;
+  $('s-efw').value =n(S.settings.ef_water)??0.8;
+  $('s-efs3v').value=n(S.settings.ef_elec_s3)??0.0812;
+  $('s-efs3').value=(S.settings.ef_s3_on===true||S.settings.ef_s3_on==='true')?'1':'0';
+  const wok=(S.settings.ef_water_ok===true||S.settings.ef_water_ok==='true');
+  $('s-efwok').value=wok?'1':'0';
+  $('s-efw-hint').innerHTML=wok?'<span style="color:var(--ok)">✓ ยืนยันแล้ว</span>'
+    :'<span style="color:var(--bad)">ยังไม่ยืนยัน — ใส่ค่าที่คณะใช้ใน CFO</span>';
   renderMeterTable();
   const c={eb:S.elec_bill.length,em:S.elec_meter.length,wm:S.water_meter.length,sm:(S.shop_meter||[]).length};
   $('s-seed').innerHTML=`<div style="font-size:12.5px;line-height:1.9">
