@@ -20,10 +20,126 @@
   --t1:#0D1B2A; --t2:#4A5C73; --t3:#8A9BB0;
   --ok:#1E8E5A; --ok-l:#E4F5EC; --warn:#B8730A; --warn-l:#FDF3E0;
   --bad:#C62E3B; --bad-l:#FCEBEC; --info:#1B5CA8; --info-l:#E8F0FA;
+  --teal:#0E7490; --teal-2:#22D3EE;
   --r:10px; --r-l:16px;
   --sh:0 1px 2px rgba(13,27,42,.04),0 4px 14px rgba(13,27,42,.06);
   --sh-l:0 8px 32px rgba(13,27,42,.12);
 }
+
+/* ===================== ธีมฮาโลวีน 🎃 =====================
+   ฟักทองส้ม + ม่วงมนตร์ดำ บนพื้นมืด — สลับกลับธีม ม.อ. ได้ที่ปุ่มมุมขวาบน
+   ตัวเลขและตารางยังอ่านง่ายเหมือนเดิม เปลี่ยนแค่สี ไม่เปลี่ยนโครง */
+:root[data-theme="hw"]{
+  --psu:#FF7A1A; --psu-2:#FF9A4D; --psu-l:#3B2410; --psu-d:#160D22;
+  --gold:#A855F7; --gold-l:#2E1A47; --gold-d:#C98BFF;
+  --bg:#120B1C; --card:#1C1230; --soft:#241836; --soft2:#2E2046;
+  --line:#33244C; --line2:#4A3568;
+  --t1:#F4EEFB; --t2:#BBA9D6; --t3:#8B7AA8;
+  --ok:#4ADE80; --ok-l:#133324; --warn:#FBBF24; --warn-l:#3A2A0B;
+  --bad:#FB7185; --bad-l:#3D1522; --info:#FF9A4D; --info-l:#35210F;
+  --teal:#2DD4E8; --teal-2:#67E8F9;
+  --sh:0 1px 2px rgba(0,0,0,.35),0 4px 16px rgba(0,0,0,.4);
+  --sh-l:0 10px 36px rgba(0,0,0,.55);
+}
+:root[data-theme="hw"] .sb{background:#0C0714;border-right:1px solid #2A1B40}
+:root[data-theme="hw"] .sb-logo{background:linear-gradient(135deg,#C2410C,#FF7A1A,#FDBA74)}
+:root[data-theme="hw"] .nav.on{box-shadow:inset 3px 0 0 var(--psu)}
+:root[data-theme="hw"] .nav-b{background:var(--psu);color:#160D22}
+:root[data-theme="hw"] .al-w{border-color:#6B4E12;color:#FBBF24}
+:root[data-theme="hw"] .al-b{border-color:#6E2436;color:#FB7185}
+:root[data-theme="hw"] .al-s{border-color:#1E5C3C;color:#4ADE80}
+:root[data-theme="hw"] body{
+  background:
+    radial-gradient(900px 420px at 88% -8%, rgba(255,122,26,.13), transparent 60%),
+    radial-gradient(760px 380px at 4% 102%, rgba(168,85,247,.13), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+}
+:root[data-theme="hw"] input,:root[data-theme="hw"] select,:root[data-theme="hw"] textarea{background:var(--soft);color:var(--t1)}
+:root[data-theme="hw"] .btn{background:var(--soft)}
+:root[data-theme="hw"] .btn:hover{background:var(--psu-l);border-color:var(--psu);color:var(--psu-2)}
+/* ค้างคาวลอยจางๆ ปิดเองเมื่อเครื่องตั้งค่าลดการเคลื่อนไหว */
+.bats{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;display:none}
+:root[data-theme="hw"] .bats{display:block}
+.bat{position:absolute;font-size:22px;opacity:.14;animation:fly linear infinite}
+@keyframes fly{
+  0%{transform:translate(-8vw,0) scaleX(1)}
+  50%{transform:translate(52vw,-7vh) scaleX(1)}
+  50.01%{transform:translate(52vw,-7vh) scaleX(-1)}
+  100%{transform:translate(112vw,3vh) scaleX(-1)}
+}
+@media (prefers-reduced-motion:reduce){.bat{animation:none;opacity:.08}}
+
+/* ===================== ธีมคริสต์มาส 🎄 =====================
+   พื้นเขียวสนกลางคืน + แดงคริสต์มาส + ทองไฟประดับ
+   กราฟใช้คู่ แดง–ทอง ไม่ใช่ แดง–เขียว เพราะคนตาบอดสีแดง-เขียวจะแยกสองแท่งไม่ออก
+   ส่วนสีเขียวเก็บไว้ใช้กับโครงหน้าจอแทน ธีมยังอ่านออกว่าคริสต์มาสอยู่ */
+:root[data-theme="xmas"]{
+  --psu:#F2555A; --psu-2:#FF8086; --psu-l:#3A1518; --psu-d:#0A1711;
+  --gold:#E8B93F; --gold-l:#36290E; --gold-d:#F5CF6B;
+  --bg:#0B1A13; --card:#122A1F; --soft:#173327; --soft2:#1F4232;
+  --line:#214535; --line2:#33624B;
+  --t1:#EEF7F1; --t2:#A8C4B4; --t3:#7E9C8C;
+  --ok:#4ADE80; --ok-l:#123224; --warn:#F5CF6B; --warn-l:#3A2E0D;
+  --bad:#FF8086; --bad-l:#3C161A; --info:#F5CF6B; --info-l:#36290E;
+  --teal:#4DD4C4; --teal-2:#7FE8DC;
+  --sh:0 1px 2px rgba(0,0,0,.35),0 4px 16px rgba(0,0,0,.38);
+  --sh-l:0 10px 36px rgba(0,0,0,.5);
+}
+:root[data-theme="xmas"] .sb{background:#071209;border-right:1px solid #1C3A2A}
+:root[data-theme="xmas"] .sb-logo{background:linear-gradient(135deg,#166534,#22A05A,#E8B93F)}
+:root[data-theme="xmas"] .nav.on{box-shadow:inset 3px 0 0 #E8B93F}
+:root[data-theme="xmas"] .nav-b{background:var(--psu);color:#fff}
+:root[data-theme="xmas"] .al-w{border-color:#6A5416;color:#F5CF6B}
+:root[data-theme="xmas"] .al-b{border-color:#73282D;color:#FF8086}
+:root[data-theme="xmas"] .al-s{border-color:#1E5C3C;color:#4ADE80}
+:root[data-theme="xmas"] body{
+  background:
+    radial-gradient(900px 420px at 90% -8%, rgba(242,85,90,.12), transparent 60%),
+    radial-gradient(760px 380px at 6% 102%, rgba(232,185,63,.11), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+}
+:root[data-theme="xmas"] input,:root[data-theme="xmas"] select,:root[data-theme="xmas"] textarea{background:var(--soft);color:var(--t1)}
+:root[data-theme="xmas"] .btn{background:var(--soft)}
+:root[data-theme="xmas"] .btn:hover{background:var(--psu-l);border-color:var(--psu);color:var(--psu-2)}
+/* หิมะโปรยจางๆ */
+.snow{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;display:none}
+:root[data-theme="xmas"] .snow{display:block}
+.flake{position:absolute;top:-6vh;font-size:16px;opacity:.5;color:#DFF3EA;animation:fall linear infinite}
+@keyframes fall{
+  0%{transform:translateY(-6vh) rotate(0)}
+  100%{transform:translateY(108vh) rotate(260deg)}
+}
+@media (prefers-reduced-motion:reduce){.flake{animation:none;opacity:.22}}
+
+/* ===== กรอบลายเทศกาล — วางไว้หลังเนื้อหา ไม่กินคลิก ไม่ทับตัวเลข ===== */
+.deco{position:fixed;inset:0 0 0 236px;pointer-events:none;z-index:-1;overflow:hidden}
+.dc{position:absolute;display:none}
+.dc-tl{top:52px;left:0}.dc-tr{top:52px;right:0}.dc-bl{bottom:0;left:0}.dc-br{bottom:0;right:0}
+.dc-tl,.dc-tr{width:170px}.dc-bl,.dc-br{width:215px}
+:root[data-theme="hw"]   .dc-hw{display:block}
+:root[data-theme="xmas"] .dc-xm{display:block}
+/* ธีมเทศกาลเว้นขอบกว้างขึ้น ลายจะได้มีที่โผล่ ไม่ต้องไปมุดหลังการ์ด */
+:root[data-theme="hw"]   .wrap,
+:root[data-theme="xmas"] .wrap{padding:26px 58px 30px}
+.deco-foot{display:none;margin:18px auto 0;max-width:620px}
+.df{display:none;width:100%;height:auto}
+:root[data-theme="hw"] .deco-foot,
+:root[data-theme="xmas"] .deco-foot{display:block}
+:root[data-theme="hw"]   .df-hw{display:block}
+:root[data-theme="xmas"] .df-xm{display:block}
+@media(max-width:880px){
+  .deco{inset:0}
+  .dc-tl,.dc-tr{width:96px;top:46px}
+  .dc-bl,.dc-br{width:118px;opacity:.75}
+  :root[data-theme="hw"] .wrap,
+  :root[data-theme="xmas"] .wrap{padding:14px 12px 76px}
+  .dc{display:none !important}            /* จอแคบใช้แถบท้ายหน้าแทน ไม่งั้นลายซ้อนกันสองชั้น */
+  .deco-foot{margin-top:10px}
+}
+
+
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans Thai',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.6;-webkit-text-size-adjust:100%}
 .app{display:flex;min-height:100vh}
 
@@ -74,7 +190,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans Thai',sa
 .sgb+.sgb{border-left:1px solid var(--line2)}
 .sgb.on{background:var(--psu);color:#fff}
 .sgb.on:hover{background:var(--psu-2);color:#fff}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:18px;box-shadow:var(--sh)}
+.card{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-radius:var(--r-l);padding:18px;box-shadow:var(--sh)}
 .card+.card{margin-top:16px}
 .ch{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .ct{font-size:14.5px;font-weight:700}
@@ -93,7 +209,7 @@ input[readonly]{background:var(--soft2);color:var(--t3)}
 .kpi::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--psu-2)}
 .kpi.k-g::before{background:linear-gradient(90deg,var(--gold-d),var(--gold-l))}
 .kpi.k-b::before{background:linear-gradient(90deg,var(--psu),var(--psu-2))}
-.kpi.k-t::before{background:linear-gradient(90deg,#0E7490,#22D3EE)}
+.kpi.k-t::before{background:linear-gradient(90deg,var(--teal),#22D3EE)}
 .kpi.k-r::before{background:linear-gradient(90deg,#9F1239,#FB7185)}
 .kpi-l{font-size:11.5px;color:var(--t2);font-weight:600}
 .kpi-v{font-size:25px;font-weight:800;line-height:1.15;margin-top:4px;letter-spacing:-.5px}
@@ -152,12 +268,118 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 <body>
 
 <div class="sbd" id="sbd" onclick="sbClose()"></div>
+<!-- ===== ลายตกแต่งตามเทศกาล — วาดเองเป็น SVG ไม่ใช้ไฟล์ภาพ โหลดเร็วและคมทุกความละเอียด ===== -->
+<div class="deco" aria-hidden="true">
+
+  <!-- ---------- ฮาโลวีน ---------- -->
+  <svg class="dc dc-hw dc-tl" viewBox="0 0 160 160"><g fill="none" stroke="#FFB27A" stroke-width="2.2" stroke-linecap="round" opacity=".85">
+    <path d="M0 0 L150 150 M0 0 L155 95 M0 0 L95 155 M0 0 L150 40 M0 0 L40 150"/>
+    <path d="M34 0A34 34 0 0 1 0 34M62 0A62 62 0 0 1 0 62M92 0A92 92 0 0 1 0 92M124 0A124 124 0 0 1 0 124"/>
+  </g>
+  <g><path d="M112 36 v22" stroke="#FFB27A" stroke-width="2"/>
+    <ellipse cx="112" cy="68" rx="11" ry="12" fill="#2B1B3D"/><circle cx="112" cy="55" r="6.5" fill="#2B1B3D"/>
+    <circle cx="109" cy="54" r="1.9" fill="#FF7A1A"/><circle cx="115" cy="54" r="1.9" fill="#FF7A1A"/>
+    <g stroke="#2B1B3D" stroke-width="2" stroke-linecap="round" fill="none">
+      <path d="M101 62 93 54M123 62 131 54M100 70 90 70M124 70 134 70M102 77 95 85M122 77 129 85"/></g></g></svg>
+
+  <svg class="dc dc-hw dc-tr" viewBox="0 0 170 130">
+    <path d="M132 10a34 34 0 1 0 24 58 28 28 0 1 1-24-58z" fill="#F7C948" opacity=".9"/>
+    <g fill="#2B1B3D">
+      <path d="M26 56c7-9 13-4 16-1 3-3 9-8 16 1-7-2-11 1-16 7-5-6-9-9-16-7z"/>
+      <path d="M62 86c5-7 10-3 12-1 2-2 7-6 12 1-5-2-8 1-12 5-4-4-7-7-12-5z" opacity=".75"/>
+      <path d="M96 40c4-5 8-2 10-1 2-1 5-5 9 1-4-1-6 1-9 4-3-3-6-5-10-4z" opacity=".55"/></g>
+    <g fill="#FFD166"><circle cx="18" cy="22" r="2.4"/><circle cx="54" cy="16" r="1.8"/><circle cx="86" cy="98" r="2"/><circle cx="150" cy="104" r="1.7"/></g></svg>
+
+  <svg class="dc dc-hw dc-bl" viewBox="0 0 200 150">
+    <path d="M118 96c0-16 10-27 22-27 5 0 9 2 12 5 3-3 7-5 12-5 12 0 22 11 22 27s-10 30-22 30c-5 0-9-2-12-5-3 3-7 5-12 5-12 0-22-14-22-30z" fill="#C2410C" opacity=".55"/>
+    <g><path d="M30 92c0-22 14-38 31-38 7 0 13 3 17 7 4-4 10-7 17-7 17 0 31 16 31 38s-14 42-31 42c-7 0-13-3-17-7-4 4-10 7-17 7-17 0-31-20-31-42z" fill="#FF7A1A"/>
+      <path d="M78 54c-3-10 2-18 6-22 1 6 4 10 8 12-5 2-9 5-14 10z" fill="#3F8F4A"/>
+      <g fill="#2B1B3D"><path d="M52 86l16-7 2 14z"/><path d="M106 86l-16-7-2 14z"/>
+        <path d="M50 104h58l-8 9-7-5-7 7-7-7-7 5z"/></g>
+      <g stroke="#E8690B" stroke-width="2" fill="none" opacity=".5"><path d="M60 62c-5 14-5 40 0 56M96 62c5 14 5 40 0 56"/></g></g></svg>
+
+  <svg class="dc dc-hw dc-br" viewBox="0 0 190 150">
+    <g><path d="M96 28c22 0 38 18 38 42v62c-7 0-9-9-14-9s-7 9-14 9-8-9-14-9-8 9-14 9-8-9-14-9-5 9-12 9V70c0-24 16-42 44-42z" fill="#F6EEE3" opacity=".92"/>
+      <g fill="#2B1B3D"><ellipse cx="82" cy="66" rx="6" ry="8"/><ellipse cx="110" cy="66" rx="6" ry="8"/>
+        <ellipse cx="96" cy="88" rx="7" ry="9"/></g>
+      <circle cx="68" cy="84" r="5" fill="#FF9A4D" opacity=".5"/><circle cx="124" cy="84" r="5" fill="#FF9A4D" opacity=".5"/></g>
+    <g transform="translate(14 78)"><rect x="6" y="18" width="20" height="40" rx="3" fill="#E8DCC8"/>
+      <rect x="2" y="56" width="28" height="7" rx="3" fill="#8A6010"/>
+      <path d="M16 18v-9" stroke="#6B5B3E" stroke-width="2"/>
+      <path d="M16 2c4 4 5 7 0 9-5-2-4-5 0-9z" fill="#F7C948"/></g>
+    <g fill="#2B1B3D" opacity=".8"><path d="M150 36c5-7 10-3 12-1 2-2 7-6 12 1-5-2-8 1-12 5-4-4-7-7-12-5z"/></g></svg>
+
+  <!-- ---------- คริสต์มาส ---------- -->
+  <svg class="dc dc-xm dc-tl" viewBox="0 0 180 130">
+    <g stroke="#1F6B3F" stroke-width="7" stroke-linecap="round" fill="none">
+      <path d="M-6 16h150"/><path d="M18 16l-14-14M18 16l-14 14M52 16l-14-14M52 16l-14 14M86 16l-14-14M86 16l-14 14M120 16l-14-14M120 16l-14 14"/></g>
+    <g stroke="#2E8B57" stroke-width="4" stroke-linecap="round" fill="none" opacity=".85">
+      <path d="M-6 30h120"/><path d="M26 30l-10-10M26 30l-10 10M60 30l-10-10M60 30l-10 10M94 30l-10-10M94 30l-10 10"/></g>
+    <g><path d="M34 20v22" stroke="#B8902F" stroke-width="2"/><circle cx="34" cy="52" r="11" fill="#F2555A"/>
+      <path d="M28 46a8 8 0 0 1 7-4" stroke="#fff" stroke-width="2.4" fill="none" opacity=".6" stroke-linecap="round"/>
+      <rect x="30" y="38" width="8" height="5" rx="1.5" fill="#E8B93F"/></g>
+    <g><path d="M92 34v18" stroke="#B8902F" stroke-width="2"/><circle cx="92" cy="61" r="9" fill="#E8B93F"/>
+      <rect x="88.5" y="48" width="7" height="4.5" rx="1.5" fill="#B8902F"/></g>
+    <g fill="#DFF3EA" opacity=".9"><circle cx="128" cy="54" r="2.3"/><circle cx="150" cy="30" r="1.8"/><circle cx="112" cy="78" r="1.7"/></g></svg>
+
+  <svg class="dc dc-xm dc-tr" viewBox="0 0 170 140">
+    <g stroke="#1F6B3F" stroke-width="7" stroke-linecap="round" fill="none">
+      <path d="M176 16H26"/><path d="M152 16l14-14M152 16l14 14M118 16l14-14M118 16l14 14M84 16l14-14M84 16l14 14M50 16l14-14M50 16l14 14"/></g>
+    <g stroke="#2E8B57" stroke-width="4" stroke-linecap="round" fill="none" opacity=".85">
+      <path d="M176 30H66"/><path d="M144 30l10-10M144 30l10 10M110 30l10-10M110 30l10 10M76 30l10-10M76 30l10 10"/></g>
+    <path d="M128 42l4.6 9.6 10.4 1.5-7.5 7.4 1.8 10.5-9.3-5-9.3 5 1.8-10.5-7.5-7.4 10.4-1.5z" fill="#E8B93F"/>
+    <g stroke="#DFF3EA" stroke-width="2" stroke-linecap="round" opacity=".85">
+      <g transform="translate(58 72)"><path d="M0-13V13M-11.3-6.5L11.3 6.5M-11.3 6.5L11.3-6.5"/>
+        <path d="M0-13l-4 4M0-13l4 4M0 13l-4-4M0 13l4-4"/></g>
+      <g transform="translate(96 104) scale(.65)"><path d="M0-13V13M-11.3-6.5L11.3 6.5M-11.3 6.5L11.3-6.5"/></g></g></svg>
+
+  <svg class="dc dc-xm dc-bl" viewBox="0 0 230 160">
+    <path d="M0 150h230c-40-26-90-30-130-14C70 120 30 126 0 140z" fill="#F4FBF7" opacity=".5"/>
+    <g><path d="M62 24l26 38H36zM62 50l32 44H30zM62 78l38 50H24z" fill="#1F6B3F"/>
+      <rect x="56" y="126" width="12" height="16" rx="2" fill="#7A4A22"/>
+      <path d="M62 12l3.4 7 7.6 1.1-5.5 5.4 1.3 7.6-6.8-3.6-6.8 3.6 1.3-7.6-5.5-5.4 7.6-1.1z" fill="#E8B93F"/>
+      <g fill="#F2555A"><circle cx="50" cy="60" r="3.4"/><circle cx="78" cy="86" r="3.4"/><circle cx="44" cy="106" r="3.4"/></g>
+      <g fill="#E8B93F"><circle cx="76" cy="54" r="2.8"/><circle cx="48" cy="86" r="2.8"/><circle cx="84" cy="112" r="2.8"/></g></g>
+    <g transform="translate(108 96)"><rect x="0" y="14" width="42" height="32" rx="3" fill="#F2555A"/>
+      <rect x="17" y="14" width="8" height="32" fill="#E8B93F"/><rect x="0" y="24" width="42" height="7" fill="#E8B93F"/>
+      <path d="M21 14c-8-10-18-2-10 4M21 14c8-10 18-2 10 4" fill="none" stroke="#E8B93F" stroke-width="3"/></g>
+    <g transform="translate(150 112)"><rect x="0" y="10" width="30" height="24" rx="3" fill="#2E8B57"/>
+      <rect x="12" y="10" width="6" height="24" fill="#F4FBF7" opacity=".85"/><rect x="0" y="18" width="30" height="5" fill="#F4FBF7" opacity=".85"/></g>
+    <g fill="#DFF3EA" opacity=".85"><circle cx="192" cy="60" r="2.4"/><circle cx="210" cy="92" r="1.9"/></g></svg>
+
+  <svg class="dc dc-xm dc-br" viewBox="0 0 220 160">
+    <path d="M220 150H0c38-24 86-28 124-13 30-16 68-10 96 3z" fill="#F4FBF7" opacity=".5"/>
+    <g><path d="M160 30l30 44H130zM160 60l36 50H124zM160 90l42 56H118z" fill="#15532F"/>
+      <rect x="153" y="144" width="14" height="16" rx="2" fill="#7A4A22"/>
+      <path d="M160 16l3.8 7.8 8.6 1.3-6.2 6 1.5 8.5-7.7-4-7.7 4 1.5-8.5-6.2-6 8.6-1.3z" fill="#E8B93F"/>
+      <g fill="#F2555A"><circle cx="146" cy="66" r="3.6"/><circle cx="178" cy="98" r="3.6"/><circle cx="140" cy="120" r="3.6"/></g>
+      <g fill="#DFF3EA"><circle cx="176" cy="60" r="2.8"/><circle cx="144" cy="96" r="2.8"/><circle cx="184" cy="126" r="2.8"/></g></g>
+    <g transform="translate(40 104)"><path d="M26 0c6 0 11 5 11 11 0 3-1 5-3 7 5 3 9 9 9 16 0 10-8 18-17 18s-17-8-17-18c0-7 4-13 9-16-2-2-3-4-3-7C15 5 20 0 26 0z" fill="#F8FBFA"/>
+      <g fill="#2B2B2B"><circle cx="22" cy="10" r="1.7"/><circle cx="30" cy="10" r="1.7"/></g>
+      <path d="M23 15q3 2 6 0" stroke="#E8690B" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M13 3h26l-3-5H16z" fill="#F2555A"/><rect x="11" y="3" width="30" height="3.5" rx="1.5" fill="#B9353A"/>
+      <g fill="#2B2B2B"><circle cx="26" cy="32" r="1.8"/><circle cx="26" cy="40" r="1.8"/></g></g>
+    <g stroke="#DFF3EA" stroke-width="2" stroke-linecap="round" opacity=".8" transform="translate(16 54)">
+      <path d="M0-11V11M-9.5-5.5L9.5 5.5M-9.5 5.5L9.5-5.5"/><path d="M0-11l-3.5 3.5M0-11l3.5 3.5"/></g></svg>
+</div>
+<div class="snow" aria-hidden="true">
+  <span class="flake" style="left:8%;animation-duration:17s;animation-delay:-2s">❄️</span>
+  <span class="flake" style="left:27%;animation-duration:23s;animation-delay:-11s;font-size:13px">❅</span>
+  <span class="flake" style="left:46%;animation-duration:19s;animation-delay:-6s;font-size:18px">❆</span>
+  <span class="flake" style="left:64%;animation-duration:26s;animation-delay:-16s">❄️</span>
+  <span class="flake" style="left:83%;animation-duration:21s;animation-delay:-9s;font-size:14px">❅</span>
+</div>
+<div class="bats" aria-hidden="true">
+  <span class="bat" style="top:14%;animation-duration:46s;animation-delay:-3s">🦇</span>
+  <span class="bat" style="top:52%;animation-duration:63s;animation-delay:-21s;font-size:17px">🦇</span>
+  <span class="bat" style="top:76%;animation-duration:54s;animation-delay:-37s;font-size:26px">🦇</span>
+</div>
 <div class="app">
 
 <aside class="sb" id="sb">
   <div class="sb-head">
     <div class="sb-brand">
-      <div class="sb-logo">💧⚡</div>
+      <div class="sb-logo" id="sb-logo">💧⚡</div>
       <div>
         <div class="sb-name">ติดตามค่าน้ำค่าไฟฟ้า</div>
         <div class="sb-sub" id="ver-side">อาคารคณะการแพทย์แผนไทย</div>
@@ -175,6 +397,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
   <div class="top">
     <div class="burger" onclick="sbToggle()">☰</div>
     <div class="title" id="ttl">แดชบอร์ด</div>
+    <select class="btn btn-s" id="thm-sel" style="width:auto" onchange="setTheme(this.value)" title="สลับธีม"></select>
     <button class="btn btn-s" onclick="loadAll(true)">🔄 รีเฟรช</button>
   </div>
   <div class="wrap">
@@ -277,7 +500,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
         <div class="fg mt"><label>หมายเหตุ</label><input type="text" id="w-note" placeholder="เช่น ท่อแตก, เปลี่ยนมิเตอร์"></div>
       </div>
 
-      <div class="card" style="border-color:#0E7490;border-width:1.5px">
+      <div class="card" style="border-color:var(--teal);border-width:1.5px">
         <div class="ch"><div class="ct">3️⃣ ผลการแบ่งสัดส่วน</div></div>
         <div id="w-calc"></div>
       </div>
@@ -391,7 +614,7 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
         <div class="scroll"><table><thead><tr>
           <th>ร้าน</th>
           <th class="num">ไฟ ก่อน</th><th class="num" style="color:var(--psu-2)">ไฟ ปัจจุบัน</th><th class="num">หน่วยไฟ</th><th class="num">ค่าไฟ</th>
-          <th class="num">น้ำ ก่อน</th><th class="num" style="color:#0E7490">น้ำ ปัจจุบัน</th><th class="num">หน่วยน้ำ</th><th class="num">ค่าน้ำ</th>
+          <th class="num">น้ำ ก่อน</th><th class="num" style="color:var(--teal)">น้ำ ปัจจุบัน</th><th class="num">หน่วยน้ำ</th><th class="num">ค่าน้ำ</th>
           <th class="num">รวม</th></tr></thead><tbody id="sh-rows"></tbody></table></div>
         <div class="row mt"><button class="btn btn-p" id="sh-save" onclick="shopSave()">✓ บันทึกทุกร้าน</button>
           <button class="btn btn-x" onclick="shopClear()">✕ ล้างช่องกรอก</button>
@@ -505,6 +728,51 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
       </div>
     </div>
 
+    <!-- แถบลายท้ายหน้า — บนมือถือการ์ดบังมุมจอหมด เลยให้เห็นตรงนี้แทน -->
+    <div class="deco-foot" aria-hidden="true">
+      <svg class="df df-hw" viewBox="0 0 560 120" preserveAspectRatio="xMidYMax meet">
+        <g transform="translate(36 22)">
+          <path d="M26 44c0-18 11-31 25-31 6 0 11 2 14 6 3-4 8-6 14-6 14 0 25 13 25 31s-11 34-25 34c-6 0-11-2-14-6-3 4-8 6-14 6-14 0-25-16-25-34z" fill="#FF7A1A"/>
+          <path d="M65 13c-2-8 2-15 5-18 1 5 3 8 7 10-4 2-8 4-12 8z" fill="#3F8F4A"/>
+          <g fill="#2B1B3D"><path d="M44 38l13-6 2 11z"/><path d="M88 38l-13-6-2 11z"/><path d="M42 53h48l-7 8-6-4-5 6-6-6-6 4z"/></g></g>
+        <g transform="translate(300 16)">
+          <path d="M40 0c18 0 31 15 31 34v50c-6 0-7-7-11-7s-6 7-11 7-7-7-11-7-7 7-11 7-7-7-11-7-4 7-10 7V34C6 15 20 0 40 0z" fill="#F6EEE3" opacity=".94"/>
+          <g fill="#2B1B3D"><ellipse cx="29" cy="32" rx="5" ry="6.5"/><ellipse cx="52" cy="32" rx="5" ry="6.5"/><ellipse cx="40" cy="50" rx="6" ry="7.5"/></g></g>
+        <g fill="#2B1B3D" opacity=".85">
+          <path d="M160 34c6-8 12-4 14-1 2-3 8-7 14 1-6-2-10 1-14 6-4-5-8-8-14-6z"/>
+          <path d="M214 62c4-6 9-3 10-1 2-2 6-5 10 1-4-1-7 1-10 4-3-3-6-5-10-4z" opacity=".7"/>
+          <path d="M470 40c5-7 10-3 12-1 2-2 7-6 12 1-5-2-8 1-12 5-4-4-7-7-12-5z"/></g>
+        <g fill="#F7C948"><circle cx="248" cy="24" r="2.6"/><circle cx="430" cy="78" r="2.2"/><circle cx="140" cy="86" r="2"/></g></svg>
+
+      <svg class="df df-xm" viewBox="0 0 560 120" preserveAspectRatio="xMidYMax meet">
+        <path d="M0 120h560c-70-30-150-34-230-16-60-22-200-20-330 6z" fill="#F4FBF7" opacity=".45"/>
+        <g transform="translate(40 12)">
+          <path d="M44 10l20 29H24zM44 30l25 34H19zM44 52l30 39H14z" fill="#1F6B3F"/>
+          <rect x="39" y="89" width="10" height="14" rx="2" fill="#7A4A22"/>
+          <path d="M44 0l2.8 5.8 6.4.9-4.6 4.5 1.1 6.4L44 14.5 38.3 17.6l1.1-6.4-4.6-4.5 6.4-.9z" fill="#E8B93F"/>
+          <g fill="#F2555A"><circle cx="34" cy="42" r="2.8"/><circle cx="56" cy="62" r="2.8"/><circle cx="30" cy="76" r="2.8"/></g>
+          <g fill="#DFF3EA"><circle cx="55" cy="38" r="2.2"/><circle cx="33" cy="60" r="2.2"/><circle cx="59" cy="82" r="2.2"/></g></g>
+        <g transform="translate(176 62)"><rect x="0" y="12" width="38" height="29" rx="3" fill="#F2555A"/>
+          <rect x="15" y="12" width="7" height="29" fill="#E8B93F"/><rect x="0" y="21" width="38" height="6" fill="#E8B93F"/>
+          <path d="M18.5 12c-7-9-16-2-9 4M18.5 12c7-9 16-2 9 4" fill="none" stroke="#E8B93F" stroke-width="3"/></g>
+        <g transform="translate(232 74)"><rect x="0" y="9" width="27" height="22" rx="3" fill="#2E8B57"/>
+          <rect x="11" y="9" width="5" height="22" fill="#F4FBF7" opacity=".85"/><rect x="0" y="16" width="27" height="4.5" fill="#F4FBF7" opacity=".85"/></g>
+        <g transform="translate(330 56)">
+          <path d="M22 0c5 0 9 4 9 9 0 2-1 4-2 6 4 3 7 8 7 13 0 9-7 16-14 16s-14-7-14-16c0-5 3-10 7-13-1-2-2-4-2-6 0-5 4-9 9-9z" fill="#F8FBFA"/>
+          <g fill="#2B2B2B"><circle cx="19" cy="9" r="1.5"/><circle cx="25" cy="9" r="1.5"/></g>
+          <path d="M19 13q3 2 6 0" stroke="#E8690B" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M10 2h24l-3-4H13z" fill="#F2555A"/><rect x="8" y="2" width="28" height="3" rx="1.5" fill="#B9353A"/></g>
+        <g transform="translate(452 14)">
+          <path d="M40 8l22 32H18zM40 30l28 38H12zM40 54l33 43H7z" fill="#15532F"/>
+          <rect x="34" y="95" width="12" height="15" rx="2" fill="#7A4A22"/>
+          <path d="M40 0l3 6.2 6.9 1-5 4.9 1.2 6.9L40 15.8 33.9 19l1.2-6.9-5-4.9 6.9-1z" fill="#E8B93F"/>
+          <g fill="#F2555A"><circle cx="30" cy="44" r="3"/><circle cx="52" cy="66" r="3"/><circle cx="28" cy="82" r="3"/></g></g>
+        <g stroke="#DFF3EA" stroke-width="1.8" stroke-linecap="round" opacity=".8">
+          <g transform="translate(130 30)"><path d="M0-9V9M-7.8-4.5L7.8 4.5M-7.8 4.5L7.8-4.5"/></g>
+          <g transform="translate(290 22) scale(.8)"><path d="M0-9V9M-7.8-4.5L7.8 4.5M-7.8 4.5L7.8-4.5"/></g>
+          <g transform="translate(410 40) scale(.65)"><path d="M0-9V9M-7.8-4.5L7.8 4.5M-7.8 4.5L7.8-4.5"/></g></g></svg>
+    </div>
+
   </div>
 </div>
 </div>
@@ -513,11 +781,62 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
-const APP_VERSION = 'v5.1';
-const APP_BUILD   = '2026-10-21 10:15';
+const APP_VERSION = 'v5.4';
+const APP_BUILD   = '2026-10-26 13:20';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-const C = { psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' };
+/* =======================================================================
+   ธีม — สีคณะเป็นหลัก มีธีมเทศกาลให้สลับ
+   ทุกธีมเปลี่ยนแค่สี ไม่แตะตัวเลขและไม่แตะไฟล์ Excel ที่ส่งออก
+   ======================================================================= */
+const THEMES = {
+  psu : { name:'สีคณะ (ม.อ.)', icon:'🎨', logo:'💧⚡', dark:false,
+          chart:{ psu:'#1B5CA8', gold:'#C9922A', teal:'#0E7490', rose:'#9F1239', grey:'#94A3B8' },
+          axis:'#4A5C73', grid:'#E3EAF3' },
+  hw  : { name:'ฮาโลวีน', icon:'🎃', logo:'🎃', dark:true,
+          chart:{ psu:'#FF7A1A', gold:'#A855F7', teal:'#2DD4E8', rose:'#FB7185', grey:'#8B7AA8' },
+          axis:'#BBA9D6', grid:'#33244C' },
+  // แดง+ทอง ไม่ใช่แดง+เขียว เพราะคนตาบอดสีแดง-เขียวจะแยกสองเส้นในกราฟไม่ออก
+  xmas: { name:'คริสต์มาส', icon:'🎄', logo:'🎄', dark:true,
+          chart:{ psu:'#F2555A', gold:'#E8B93F', teal:'#4DD4C4', rose:'#D4A5E8', grey:'#8AA398' },
+          axis:'#A8C4B4', grid:'#1E3A2C' }
+};
+const SEASON = [                      // โหมดอัตโนมัติ: [เดือน, วันเริ่ม, วันจบ, ธีม]
+  { m:10, d1:24, d2:31, t:'hw'   },   // 24–31 ต.ค.
+  { m:12, d1:1,  d2:31, t:'xmas' },   // ทั้งเดือน ธ.ค.
+  { m:1,  d1:1,  d2:2,  t:'xmas' }    // ต่อถึงปีใหม่
+];
+function seasonTheme(){
+  const n=new Date(), m=n.getMonth()+1, d=n.getDate();
+  const hit=SEASON.find(x=>x.m===m && d>=x.d1 && d<=x.d2);
+  return hit ? hit.t : 'psu';
+}
+let C = THEMES.psu.chart;
+
+let THEME = localStorage.getItem('tm_theme') || 'psu';   // 'auto' = เปลี่ยนเองตามวันที่
+const curTheme = () => THEMES[THEME==='auto' ? seasonTheme() : THEME] ? (THEME==='auto'?seasonTheme():THEME) : 'psu';
+const isHW = () => curTheme()==='hw';                     // ยังมีเทสต์เดิมเรียกใช้อยู่
+function applyTheme(){
+  const k=curTheme(), th=THEMES[k];
+  document.documentElement.setAttribute('data-theme', k);
+  C = th.chart;
+  const lg=$('sb-logo'); if(lg) lg.textContent = th.logo;
+  const sel=$('thm-sel');
+  if(sel && !sel.dataset.ready){
+    sel.innerHTML = `<option value="auto">🗓️ อัตโนมัติตามเทศกาล</option>`
+      + Object.entries(THEMES).map(([k2,t])=>`<option value="${k2}">${t.icon} ${t.name}</option>`).join('');
+    sel.dataset.ready='1';
+  }
+  if(sel) sel.value=THEME;
+  if(window.Chart){ Chart.defaults.color=th.axis; Chart.defaults.borderColor=th.grid; }
+}
+function setTheme(v){
+  THEME = THEMES[v]||v==='auto' ? v : 'psu';
+  try{ localStorage.setItem('tm_theme',THEME); }catch(e){}
+  applyTheme();
+  refresh();            // วาดกราฟใหม่ด้วยจานสีใหม่
+}
+function toggleTheme(){ setTheme(isHW()?'psu':'hw'); }   // เผื่อของเดิมเรียกอยู่
 
 const DEFAULT_METERS = [
   // ---- ไฟฟ้า: หน้าปัดอ่านเป็น MWh ต้องคูณ 1000 เป็น kWh ----
@@ -1574,7 +1893,14 @@ function renderHeat(){
   const avg={};
   cfg.forEach(mc=>{ const v=ms.map(([y,m])=>{const r=meterRow(type,y,m,mc.id);return r?n(r.used_unit):null;}).filter(x=>x!=null&&x>0);
     avg[mc.id]=v.length?v.reduce((a,b)=>a+b,0)/v.length:0; });
-  const col=p=>p>=1.3?['#7F1D1D','#FECACA']:p>=1.2?['#9A3412','#FED7AA']:p>=1.1?['#854D0E','#FEF08A']:['#14532D','#D1FAE5'];
+  // [สีตัวอักษร, สีพื้น] — ชุดมืดสำหรับธีมฮาโลวีน
+  const HMSET = {
+    psu : { hot:['#7F1D1D','#FECACA'], warm:['#9A3412','#FED7AA'], mild:['#854D0E','#FEF08A'], ok:['#14532D','#D1FAE5'] },
+    hw  : { hot:['#FCA5A5','#3E1619'], warm:['#FDBA74','#3E2411'], mild:['#FDE68A','#3B2E0C'], ok:['#86EFAC','#133324'] },
+    xmas: { hot:['#FF9AA0','#3C171A'], warm:['#F5CF6B','#3A2E0D'], mild:['#DCE8A0','#2E3A16'], ok:['#86EFAC','#123224'] }
+  };
+  const HM = HMSET[curTheme()] || HMSET.psu;
+  const col=p=>p>=1.3?HM.hot:p>=1.2?HM.warm:p>=1.1?HM.mild:HM.ok;
   let h=`<div class="hm" style="grid-template-columns:118px repeat(${ms.length},minmax(44px,1fr))">`;
   // ขีดเส้นแบ่งตรงที่ขึ้นปีใหม่ (ปีงบจะแบ่งที่ ต.ค.) จะได้เห็นขอบปีชัด
   const brk=ms.map(([y,m],i)=> i>0 && yrOf(y,m)!==yrOf(ms[i-1][0],ms[i-1][1]));
@@ -1590,7 +1916,7 @@ function renderHeat(){
     });
   });
   h+='</div><div class="row mt" style="font-size:11.5px;color:var(--t2)">';
-  [['#D1FAE5','ปกติ'],['#FEF08A','+10%'],['#FED7AA','+20%'],['#FECACA','+30%']].forEach(([c,l])=>
+  [[HM.ok[1],'ปกติ'],[HM.mild[1],'+10%'],[HM.warm[1],'+20%'],[HM.hot[1],'+30%']].forEach(([c,l])=>
     h+=`<span class="row" style="gap:5px"><span style="width:18px;height:12px;background:${c};border-radius:3px;display:inline-block"></span>${l}</span>`);
   h+=`<span class="row" style="gap:5px"><span style="width:2px;height:12px;background:var(--psu-2);display:inline-block"></span>${isFY()?'ขึ้นปีงบใหม่ (ต.ค.)':'ขึ้นปีใหม่ (ม.ค.)'}</span>`;
   h+='</div>';
@@ -2068,9 +2394,9 @@ function shopBuildRows(){
     <td class="num"><input class="mi" type="number" step="0.01" id="seu-${s.id}" placeholder="—" oninput="shopCalc(1);queueAutoSave('shop')" style="width:74px;border-color:var(--line2);font-weight:500" title="แก้เองได้ เผื่อมิเตอร์หมุนครบรอบ"></td>
     <td class="num" id="set-${s.id}" style="color:var(--gold-d);font-weight:700">—</td>
     <td class="num"><input class="mi mi-p" type="number" step="0.01" id="swp-${s.id}" readonly tabindex="-1" placeholder="—" style="width:84px"></td>
-    <td class="num"><input class="mi" type="number" step="0.01" id="swc-${s.id}" placeholder="0" oninput="shopCalc();queueAutoSave('shop')" style="width:84px;border-color:#0E7490"></td>
+    <td class="num"><input class="mi" type="number" step="0.01" id="swc-${s.id}" placeholder="0" oninput="shopCalc();queueAutoSave('shop')" style="width:84px;border-color:var(--teal)"></td>
     <td class="num"><input class="mi" type="number" step="0.01" id="swu-${s.id}" placeholder="—" oninput="shopCalc(1);queueAutoSave('shop')" style="width:74px;border-color:var(--line2);font-weight:500"></td>
-    <td class="num" id="swt-${s.id}" style="color:#0E7490;font-weight:700">—</td>
+    <td class="num" id="swt-${s.id}" style="color:var(--teal);font-weight:700">—</td>
     <td class="num" id="stt-${s.id}" style="font-weight:800">—</td></tr>`).join('')
     : '<tr><td colspan="10" class="muted" style="text-align:center;padding:18px">ยังไม่มีร้านเช่า</td></tr>';
 }
@@ -2183,12 +2509,12 @@ function renderSRep(){
         <td class="num muted">${fmt(n(r.elec_prev),0)} → ${fmt(n(r.elec_curr),0)}</td><td class="num">${fmt(n(r.elec_unit),0)}</td>
         <td class="num" style="color:var(--gold-d);font-weight:700">${fmt(n(r.elec_cost))}</td>
         <td class="num muted">${fmt(n(r.water_prev),0)} → ${fmt(n(r.water_curr),0)}</td><td class="num">${fmt(n(r.water_unit),0)}</td>
-        <td class="num" style="color:#0E7490;font-weight:700">${fmt(n(r.water_cost))}</td>
+        <td class="num" style="color:var(--teal);font-weight:700">${fmt(n(r.water_cost))}</td>
         <td class="num" style="font-weight:800">${fmt(n(r.total))}</td></tr>`
         :`<tr class="muted"><td>${esc(s.name)}</td><td colspan="7" style="text-align:center">ยังไม่บันทึก</td></tr>`).join('')}
       <tr style="background:var(--soft);font-weight:800"><td>รวมทุกร้าน</td><td colspan="2"></td>
         <td class="num" style="color:var(--gold-d)">${fmt(te)}</td><td colspan="2"></td>
-        <td class="num" style="color:#0E7490">${fmt(tw)}</td><td class="num">${fmt(te+tw)}</td></tr></tbody></table>`;
+        <td class="num" style="color:var(--teal)">${fmt(tw)}</td><td class="num">${fmt(te+tw)}</td></tr></tbody></table>`;
     return;
   }
   // ---- รายปี ----
@@ -2207,14 +2533,14 @@ function renderSRep(){
       const tds=cells.map(([cy,m])=>{ const r=shopRow(cy,m,s.id);
         if(!r) return '<td class="num muted">—</td>';
         const e=n(r.elec_cost)||0, w=n(r.water_cost)||0; se+=e; sw+=w;
-        return `<td class="num"><div style="color:var(--gold-d);font-weight:700">${fmt(e)}</div>${w?`<div style="color:#0E7490;font-size:11px">${fmt(w)}</div>`:''}</td>`;
+        return `<td class="num"><div style="color:var(--gold-d);font-weight:700">${fmt(e)}</div>${w?`<div style="color:var(--teal);font-size:11px">${fmt(w)}</div>`:''}</td>`;
       }).join('');
       return `<tr><td><b style="font-size:12.5px">${esc(s.name)}</b><div class="muted" style="font-size:11px">${esc(s.code||'')}</div></td>${tds}
-        <td class="num" style="background:var(--soft)"><div style="color:var(--gold-d);font-weight:800">${fmt(se)}</div>${sw?`<div style="color:#0E7490;font-size:11px">${fmt(sw)}</div>`:''}<div style="font-weight:800;font-size:13px">${fmt(se+sw)}</div></td></tr>`;
+        <td class="num" style="background:var(--soft)"><div style="color:var(--gold-d);font-weight:800">${fmt(se)}</div>${sw?`<div style="color:var(--teal);font-size:11px">${fmt(sw)}</div>`:''}<div style="font-weight:800;font-size:13px">${fmt(se+sw)}</div></td></tr>`;
     }).join('')}
     <tr style="background:var(--soft);font-weight:800"><td>รวมทุกร้าน</td>
-      ${mt.map(x=>x.n?`<td class="num"><div style="color:var(--gold-d)">${fmt(x.e)}</div>${x.w?`<div style="color:#0E7490;font-size:11px">${fmt(x.w)}</div>`:''}<div>${fmt(x.e+x.w)}</div></td>`:'<td class="num muted">—</td>').join('')}
-      <td class="num"><div style="color:var(--gold-d)">${fmt(te)}</div>${tw?`<div style="color:#0E7490;font-size:11px">${fmt(tw)}</div>`:''}<div style="font-size:13px">${fmt(te+tw)}</div></td></tr>
+      ${mt.map(x=>x.n?`<td class="num"><div style="color:var(--gold-d)">${fmt(x.e)}</div>${x.w?`<div style="color:var(--teal);font-size:11px">${fmt(x.w)}</div>`:''}<div>${fmt(x.e+x.w)}</div></td>`:'<td class="num muted">—</td>').join('')}
+      <td class="num"><div style="color:var(--gold-d)">${fmt(te)}</div>${tw?`<div style="color:var(--teal);font-size:11px">${fmt(tw)}</div>`:''}<div style="font-size:13px">${fmt(te+tw)}</div></td></tr>
     </tbody></table>`;
 }
 function kpiShop(te,tw,label,avg){
@@ -2408,6 +2734,7 @@ document.getElementById('ver-side').innerHTML =
   `<b style="color:#F2D060">${APP_VERSION}</b> · build ${APP_BUILD}`;
 document.title = `ติดตามค่าน้ำค่าไฟฟ้า ${APP_VERSION}`;
 console.log(`%c ติดตามค่าน้ำค่าไฟฟ้า ${APP_VERSION} (build ${APP_BUILD}) `,'background:#002E6D;color:#F2D060;font-weight:700;padding:3px 8px;border-radius:4px');
+applyTheme();          // ตั้งธีมก่อนวาดอะไร จะได้ไม่กะพริบ
 buildNav();
 loadCache();
 ensureMeters();
