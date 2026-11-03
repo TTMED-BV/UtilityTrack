@@ -133,6 +133,7 @@
   background:#F3F6FA;border:1px solid #E1E8F1;border-radius:7px;padding:9px 13px;margin-bottom:14px}
 .inv-lbl{color:#555;font-size:12px;margin-right:4px}
 .inv-code{color:#555;font-size:11.5px}
+.inv-lessee{margin-top:3px}
 .inv-tb{width:100%;border-collapse:collapse;font-size:13px}
 .inv-tb th{background:#1F3A5F;color:#fff;padding:8px 9px;font-weight:700;font-size:12.5px;text-align:left;white-space:nowrap}
 .inv-tb th.num,.inv-tb td.num{text-align:right}
@@ -867,8 +868,8 @@ code{background:var(--soft2);padding:1px 5px;border-radius:4px;font-size:12px;fo
 /* =======================================================================
    0) CONFIG + STATE
    ======================================================================= */
-const APP_VERSION = 'v5.5';
-const APP_BUILD   = '2026-11-03 15:40';
+const APP_VERSION = 'v5.6';
+const APP_BUILD   = '2026-11-03 16:00';
 const MN  = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MFL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 /* =======================================================================
@@ -1306,6 +1307,7 @@ async function loadAll(manual){
     S.water_bill  = pick('water_bill', S.water_bill);
     S.water_meter = pick('water_meter',S.water_meter);
     S.shops       = pick('shops',       S.shops||[]).map(x=>({...x,code:unq(x.code),name:unq(x.name),note:unq(x.note),
+                      lessee:unq(x.lessee),
                       active:!(x.active===false||x.active==='FALSE'||x.active==='false')}));
     S.shop_meter  = pick('shop_meter',  S.shop_meter||[]);
     ensureMeters(); saveCache();
@@ -2249,7 +2251,10 @@ function invHTML(sp,r,y,m){
     </div>
 
     <div class="inv-to">
-      <div><span class="inv-lbl">เรียกเก็บจาก</span> <b>${esc(sp.name||'')}</b>${sp.code?` <span class="inv-code">รหัส ${esc(sp.code)}</span>`:''}</div>
+      <div>
+        <div><span class="inv-lbl">เรียกเก็บจาก</span> <b>${esc(sp.name||'')}</b>${sp.code?` <span class="inv-code">รหัส ${esc(sp.code)}</span>`:''}</div>
+        ${sp.lessee?`<div class="inv-lessee"><span class="inv-lbl">ผู้ทำสัญญาเช่า</span> <b>${esc(sp.lessee)}</b></div>`:''}
+      </div>
       <div><span class="inv-lbl">ประจำเดือน</span> <b>${MFL[m-1]} ${y}</b></div>
     </div>
 
@@ -2657,10 +2662,11 @@ function shopInit(){
 }
 function renderShopList(){
   const L=(S.shops||[]).sort((a,b)=>(+a.sort||0)-(+b.sort||0));
-  $('sh-list').innerHTML = L.length ? `<table><thead><tr><th>รหัส</th><th>ชื่อร้าน</th><th>หมายเหตุ</th><th>สถานะ</th><th></th></tr></thead><tbody>
+  $('sh-list').innerHTML = L.length ? `<table><thead><tr><th>รหัส</th><th>ชื่อร้าน</th><th>ชื่อผู้ทำสัญญาเช่า</th><th>หมายเหตุ</th><th>สถานะ</th><th></th></tr></thead><tbody>
     ${L.map(s=>`<tr>
       <td><input value="${esc(s.code||'')}" onchange="shSet('${s.id}','code',this.value)" style="width:72px;padding:4px 6px;font-size:12px"></td>
       <td><input value="${esc(s.name||'')}" onchange="shSet('${s.id}','name',this.value)" style="min-width:190px;padding:4px 6px;font-size:12px"></td>
+      <td><input value="${esc(s.lessee||'')}" placeholder="ชื่อ-นามสกุล ผู้เช่า" onchange="shSet('${s.id}','lessee',this.value)" style="min-width:170px;padding:4px 6px;font-size:12px"></td>
       <td><input value="${esc(s.note||'')}" onchange="shSet('${s.id}','note',this.value)" style="min-width:120px;padding:4px 6px;font-size:12px"></td>
       <td><select onchange="shSet('${s.id}','active',this.value==='1')" style="padding:4px 6px;font-size:12px">
         <option value="1"${s.active!==false?' selected':''}>เปิดใช้งาน</option><option value="0"${s.active===false?' selected':''}>ปิด</option></select></td>
@@ -2670,7 +2676,7 @@ function renderShopList(){
 function shSet(id,k,v){ const s=S.shops.find(x=>x.id===id); if(s){ s[k]=v; saveCache(); } }
 function addShop(){
   S.shops=S.shops||[];
-  S.shops.push({id:uid('sp_'),code:'R'+(S.shops.length+1),name:'ร้านใหม่',note:'',active:true,sort:S.shops.length+1});
+  S.shops.push({id:uid('sp_'),code:'R'+(S.shops.length+1),name:'ร้านใหม่',lessee:'',note:'',active:true,sort:S.shops.length+1});
   saveCache(); renderShopList(); shopBuildRows(); shopLoad();
 }
 function delShop(id){
